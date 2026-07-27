@@ -69,6 +69,7 @@ npm run dev
 - [ ] M5 — Recurring transactions
 - [ ] M6 — Charts & dashboard
 - [ ] M7 — Polish, tests, seed data
+- [ ] M8 — Loans (money lent to / borrowed from someone — party, principal, running balance, repayments)
 
 **Future work**: password reset, CSV import/export, dark mode, CI (GitHub Actions), live deployment.
 
