@@ -8,6 +8,7 @@ import { PencilIcon, PlusIcon, TrashIcon } from "../../components/ui/icons";
 import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { extractErrorMessage } from "../../lib/errors";
+import { formatDisplayDate } from "../../lib/formatDate";
 import { useCategories } from "../categories/hooks";
 import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from "./hooks";
 import type { Transaction, TransactionFilters, UpdateTransactionInput } from "./types";
@@ -287,7 +288,7 @@ export function TransactionsPanel() {
                       </>
                     ) : (
                       <>
-                        <td className="px-4 py-2 text-slate-600">{tx.date.slice(0, 10)}</td>
+                        <td className="px-4 py-2 text-slate-600">{formatDisplayDate(tx.date)}</td>
                         <td className="px-4 py-2">
                           <span className="inline-flex items-center gap-1.5">
                             <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tx.category.color }} />
