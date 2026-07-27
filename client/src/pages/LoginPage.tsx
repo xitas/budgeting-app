@@ -46,7 +46,7 @@ export function LoginPage() {
           <input type="password" className={inputClass} {...register("password")} />
         </Field>
         {serverError && <p className="text-sm text-red-600">{serverError}</p>}
-        <button type="submit" disabled={isSubmitting} className={buttonClass}>
+        <button type="submit" disabled={isSubmitting} className={`${buttonClass} w-full`}>
           {isSubmitting ? "Logging in..." : "Log in"}
         </button>
       </form>

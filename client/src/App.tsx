@@ -1,11 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedLayout } from "./components/ProtectedLayout";
-import { BudgetsPage } from "./pages/BudgetsPage";
-import { CategoriesPage } from "./pages/CategoriesPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
-import { TransactionsPage } from "./pages/TransactionsPage";
+import { WorkspacePage } from "./pages/WorkspacePage";
 
 function App() {
   return (
@@ -14,9 +12,7 @@ function App() {
       <Route path="/signup" element={<SignupPage />} />
       <Route element={<ProtectedLayout />}>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/transactions" element={<TransactionsPage />} />
-        <Route path="/categories" element={<CategoriesPage />} />
-        <Route path="/budgets" element={<BudgetsPage />} />
+        <Route path="/transactions" element={<WorkspacePage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
