@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Field } from "../../components/ui/Field";
 import { buttonClass, inputClass } from "../../components/ui/formStyles";
+import { PencilIcon, PlusIcon, TrashIcon } from "../../components/ui/icons";
 import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { extractErrorMessage } from "../../lib/errors";
@@ -170,14 +171,25 @@ export function BudgetsPanel() {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-2 text-sm">
-        <button type="button" onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-slate-500 transition-colors hover:bg-slate-100">
-          ‹
-        </button>
-        <span className="font-medium text-slate-700">
-          {MONTH_NAMES[month - 1]} {year}
-        </span>
-        <button type="button" onClick={() => goToMonth(1)} className="rounded-md px-2 py-1 text-slate-500 transition-colors hover:bg-slate-100">
-          ›
+        <div className="flex flex-1 items-center justify-center gap-2">
+          <button type="button" onClick={() => goToMonth(-1)} className="rounded-md px-2 py-1 text-slate-500 transition-colors hover:bg-slate-100">
+            ‹
+          </button>
+          <span className="font-medium text-slate-700">
+            {MONTH_NAMES[month - 1]} {year}
+          </span>
+          <button type="button" onClick={() => goToMonth(1)} className="rounded-md px-2 py-1 text-slate-500 transition-colors hover:bg-slate-100">
+            ›
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsAddOpen(true)}
+          aria-label="Add budget"
+          title="Add budget"
+          className="rounded-full bg-blue-600 p-2 text-white shadow-sm transition-colors hover:bg-blue-700"
+        >
+          <PlusIcon className="h-4 w-4" />
         </button>
       </div>
 
@@ -229,20 +241,24 @@ export function BudgetsPanel() {
                     {isEditing ? (
                       <InlineEditActions onSave={() => void saveEdit()} onCancel={cancelEdit} isSaving={updateBudget.isPending} />
                     ) : (
-                      <span>
+                      <span className="inline-flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => startEdit(b)}
-                          className="mr-2 text-slate-400 transition-colors hover:text-blue-600"
+                          aria-label="Edit budget"
+                          title="Edit"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
                         >
-                          Edit
+                          <PencilIcon className="h-3.5 w-3.5" />
                         </button>
                         <button
                           type="button"
                           onClick={() => void handleDelete(b.id)}
-                          className="text-slate-400 transition-colors hover:text-red-600"
+                          aria-label="Delete budget"
+                          title="Delete"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
                         >
-                          Delete
+                          <TrashIcon className="h-3.5 w-3.5" />
                         </button>
                       </span>
                     )}
@@ -255,10 +271,6 @@ export function BudgetsPanel() {
           </ul>
         )}
       </div>
-
-      <button type="button" onClick={() => setIsAddOpen(true)} className={`${buttonClass} w-full`}>
-        + Add budget
-      </button>
 
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add a budget">
         <AddBudgetForm month={month} year={year} availableCategories={availableCategories} onSuccess={() => setIsAddOpen(false)} />

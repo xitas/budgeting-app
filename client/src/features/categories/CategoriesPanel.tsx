@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Field } from "../../components/ui/Field";
 import { buttonClass, inputClass } from "../../components/ui/formStyles";
+import { PencilIcon, PlusIcon, TrashIcon } from "../../components/ui/icons";
 import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { extractErrorMessage } from "../../lib/errors";
@@ -133,12 +134,24 @@ function CategoryRow({
         {category.isDefault && <span className="text-xs text-slate-400">default</span>}
       </div>
       <div className="flex flex-col items-end">
-        <span>
-          <button type="button" onClick={onStartEdit} className="mr-2 text-xs text-slate-400 transition-colors hover:text-blue-600">
-            Edit
+        <span className="inline-flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onStartEdit}
+            aria-label="Edit category"
+            title="Edit"
+            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+          >
+            <PencilIcon className="h-3.5 w-3.5" />
           </button>
-          <button type="button" onClick={onDelete} className="text-xs text-slate-400 transition-colors hover:text-red-600">
-            Delete
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="Delete category"
+            title="Delete"
+            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+          >
+            <TrashIcon className="h-3.5 w-3.5" />
           </button>
         </span>
         {deleteError && <span className="text-xs text-red-600">{deleteError}</span>}
@@ -216,10 +229,22 @@ export function CategoriesPanel() {
 
   return (
     <div>
+      <div className="mb-3 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setIsAddOpen(true)}
+          aria-label="Add category"
+          title="Add category"
+          className="rounded-full bg-blue-600 p-2 text-white shadow-sm transition-colors hover:bg-blue-700"
+        >
+          <PlusIcon className="h-4 w-4" />
+        </button>
+      </div>
+
       {isLoading ? (
         <p className="text-sm text-slate-500">Loading...</p>
       ) : (
-        <div className="mb-3 space-y-4">
+        <div className="space-y-4">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <h2 className="mb-2 text-sm font-medium text-slate-700">Expense</h2>
             {renderList(expenseCategories)}
@@ -230,10 +255,6 @@ export function CategoriesPanel() {
           </div>
         </div>
       )}
-
-      <button type="button" onClick={() => setIsAddOpen(true)} className={`${buttonClass} w-full`}>
-        + Add category
-      </button>
 
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add a category">
         <AddCategoryForm onSuccess={() => setIsAddOpen(false)} />

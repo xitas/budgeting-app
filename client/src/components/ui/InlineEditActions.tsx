@@ -1,3 +1,5 @@
+import { CheckIcon, XIcon } from "./icons";
+
 interface InlineEditActionsProps {
   onSave: () => void;
   onCancel: () => void;
@@ -6,17 +8,25 @@ interface InlineEditActionsProps {
 
 export function InlineEditActions({ onSave, onCancel, isSaving }: InlineEditActionsProps) {
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex items-center gap-1">
       <button
         type="button"
         onClick={onSave}
         disabled={isSaving}
-        className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-800 disabled:opacity-50"
+        aria-label="Save"
+        title="Save"
+        className="rounded-md p-1.5 text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
       >
-        {isSaving ? "Saving..." : "Save"}
+        <CheckIcon className={`h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
       </button>
-      <button type="button" onClick={onCancel} className="text-xs text-slate-400 transition-colors hover:text-slate-600">
-        Cancel
+      <button
+        type="button"
+        onClick={onCancel}
+        aria-label="Cancel"
+        title="Cancel"
+        className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+      >
+        <XIcon className="h-4 w-4" />
       </button>
     </span>
   );

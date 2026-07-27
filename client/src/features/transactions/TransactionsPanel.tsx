@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Field } from "../../components/ui/Field";
 import { buttonClass, ghostButtonClass, inputClass } from "../../components/ui/formStyles";
+import { PencilIcon, PlusIcon, TrashIcon } from "../../components/ui/icons";
 import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { extractErrorMessage } from "../../lib/errors";
@@ -141,12 +142,7 @@ export function TransactionsPanel() {
 
   return (
     <div className="flex-1 lg:flex-[2]">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Transactions</h1>
-        <button type="button" onClick={() => setIsAddOpen(true)} className={buttonClass}>
-          + Add transaction
-        </button>
-      </div>
+      <h1 className="mb-4 text-xl font-semibold text-slate-900">Transactions</h1>
 
       <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <label className="text-sm">
@@ -201,23 +197,41 @@ export function TransactionsPanel() {
       </div>
 
       <div className="mb-4 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        {isLoading ? (
-          <p className="p-4 text-sm text-slate-500">Loading...</p>
-        ) : !data || data.items.length === 0 ? (
-          <p className="p-4 text-sm text-slate-500">No transactions found.</p>
-        ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 text-slate-500">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-slate-200 text-slate-500">
+            <tr>
+              <th className="px-4 py-2 font-medium">Date</th>
+              <th className="px-4 py-2 font-medium">Category</th>
+              <th className="px-4 py-2 font-medium">Description</th>
+              <th className="px-4 py-2 text-right font-medium">Amount</th>
+              <th className="px-4 py-2 text-right">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(true)}
+                  aria-label="Add transaction"
+                  title="Add transaction"
+                  className="rounded-full bg-blue-600 p-1.5 text-white shadow-sm transition-colors hover:bg-blue-700"
+                >
+                  <PlusIcon className="h-3.5 w-3.5" />
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
               <tr>
-                <th className="px-4 py-2 font-medium">Date</th>
-                <th className="px-4 py-2 font-medium">Category</th>
-                <th className="px-4 py-2 font-medium">Description</th>
-                <th className="px-4 py-2 text-right font-medium">Amount</th>
-                <th className="px-4 py-2" />
+                <td colSpan={5} className="p-4 text-sm text-slate-500">
+                  Loading...
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {data.items.map((tx) => {
+            ) : !data || data.items.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-4 text-sm text-slate-500">
+                  No transactions found.
+                </td>
+              </tr>
+            ) : (
+              data.items.map((tx) => {
                 const isEditing = tx.id === editingId;
                 return (
                   <tr
@@ -286,30 +300,36 @@ export function TransactionsPanel() {
                           {tx.amount.toFixed(2)}
                         </td>
                         <td className="px-4 py-2 text-right">
-                          <button
-                            type="button"
-                            onClick={() => startEdit(tx)}
-                            className="mr-2 text-xs text-slate-500 transition-colors hover:text-blue-600"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(tx.id)}
-                            className="text-xs text-slate-500 transition-colors hover:text-red-600"
-                          >
-                            Delete
-                          </button>
+                          <span className="inline-flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => startEdit(tx)}
+                              aria-label="Edit transaction"
+                              title="Edit"
+                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleDelete(tx.id)}
+                              aria-label="Delete transaction"
+                              title="Delete"
+                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </span>
                           {deleteErrors[tx.id] && <div className="text-xs text-red-600">{deleteErrors[tx.id]}</div>}
                         </td>
                       </>
                     )}
                   </tr>
                 );
-              })}
-            </tbody>
-          </table>
-        )}
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {data && data.totalPages > 1 && (
