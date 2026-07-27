@@ -1,9 +1,16 @@
 import { useState } from "react";
 import { BudgetsPanel } from "../features/budgets/BudgetsPanel";
 import { CategoriesPanel } from "../features/categories/CategoriesPanel";
+import { RecurringPanel } from "../features/recurring/RecurringPanel";
 import { TransactionsPanel } from "../features/transactions/TransactionsPanel";
 
-type RightTab = "budgets" | "categories";
+type RightTab = "budgets" | "categories" | "recurring";
+
+const TABS: { key: RightTab; label: string }[] = [
+  { key: "budgets", label: "Budgets" },
+  { key: "categories", label: "Categories" },
+  { key: "recurring", label: "Recurring" },
+];
 
 export function WorkspacePage() {
   const [rightTab, setRightTab] = useState<RightTab>("budgets");
@@ -14,27 +21,23 @@ export function WorkspacePage() {
 
       <div className="flex-1 lg:max-w-md">
         <div className="mb-4 inline-flex rounded-full bg-slate-100 p-1">
-          <button
-            type="button"
-            onClick={() => setRightTab("budgets")}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              rightTab === "budgets" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Budgets
-          </button>
-          <button
-            type="button"
-            onClick={() => setRightTab("categories")}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              rightTab === "categories" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Categories
-          </button>
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setRightTab(tab.key)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                rightTab === tab.key ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {rightTab === "budgets" ? <BudgetsPanel /> : <CategoriesPanel />}
+        {rightTab === "budgets" && <BudgetsPanel />}
+        {rightTab === "categories" && <CategoriesPanel />}
+        {rightTab === "recurring" && <RecurringPanel />}
       </div>
     </div>
   );

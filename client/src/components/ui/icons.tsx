@@ -49,3 +49,15 @@ export function PlusIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function RefreshIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={className}>
+      <path
+        d="M16 6.5A6.5 6.5 0 0 0 4.5 5M4 3.5v3h3M4 13.5A6.5 6.5 0 0 0 15.5 15m.5 1.5v-3h-3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

@@ -1,6 +1,7 @@
 import { FilterQuery } from "mongoose";
 import { Category } from "../models/Category";
 import { ITransaction, Transaction, TransactionDocument } from "../models/Transaction";
+import { runDueForUser } from "./recurring.service";
 import { AppError } from "../utils/AppError";
 import { CreateTransactionInput, ListTransactionsQuery, UpdateTransactionInput } from "../validation/transaction.validation";
 
@@ -15,6 +16,11 @@ export interface PaginatedTransactions {
 }
 
 export async function listTransactions(userId: string, query: ListTransactionsQuery): Promise<PaginatedTransactions> {
+  // Catch-up: generates anything a recurring rule owes as of today before
+  // reading, so results are never stale even if the cron job (or the server
+  // itself) wasn't running when an occurrence was due.
+  await runDueForUser(userId);
+
   const filter: FilterQuery<ITransaction> = { user: userId };
 
   if (query.category) {

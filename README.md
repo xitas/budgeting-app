@@ -66,7 +66,7 @@ npm run dev
 - [x] M2 — Auth (signup/login/refresh/logout)
 - [x] M3 — Categories & Transactions CRUD
 - [x] M4 — Budgets
-- [ ] M5 — Recurring transactions
+- [x] M5 — Recurring transactions
 - [ ] M6 — Charts & dashboard
 - [ ] M7 — Polish, tests, seed data
 - [ ] M8 — Loans (money lent to / borrowed from someone — party, principal, running balance, repayments)
