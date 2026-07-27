@@ -1,0 +1,24 @@
+{
+  "name": "budget-app",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "postinstall": "npm run build --workspace=shared",
+    "dev": "concurrently -n shared,server,client -c yellow,blue,green \"npm:dev:shared\" \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:shared": "npm run dev --workspace=shared",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:client": "npm run dev --workspace=client",
+    "build": "npm run build --workspace=shared && npm run build --workspace=server && npm run build --workspace=client",
+    "lint": "npm run lint --workspace=server && npm run lint --workspace=client",
+    "mongo:up": "docker compose up -d",
+    "mongo:down": "docker compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
