@@ -11,6 +11,21 @@ export function validate(schema: ZodTypeAny) {
       throw new AppError(400, message);
     }
 
+    // safeParse's output (result.data) is the coerced/defaulted data — e.g.
+    // z.coerce.number() on a query string. Without writing it back, every
+    // coercion in a schema is computed and silently thrown away, and
+    // handlers keep reading the raw, un-coerced req values.
+    const parsed = result.data as { body?: unknown; query?: unknown; params?: unknown };
+    if (parsed.body !== undefined) {
+      req.body = parsed.body;
+    }
+    if (parsed.query !== undefined) {
+      req.query = parsed.query as Request["query"];
+    }
+    if (parsed.params !== undefined) {
+      req.params = parsed.params as Request["params"];
+    }
+
     next();
   };
 }

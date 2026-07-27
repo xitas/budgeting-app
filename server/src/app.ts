@@ -8,6 +8,7 @@ import { env } from "./config/env";
 import { errorHandler } from "./middleware/errorHandler";
 import { notFound } from "./middleware/notFound";
 import { authRouter } from "./routes/auth.routes";
+import { budgetRouter } from "./routes/budget.routes";
 import { categoryRouter } from "./routes/category.routes";
 import { healthRouter } from "./routes/health.routes";
 import { transactionRouter } from "./routes/transaction.routes";
@@ -27,6 +28,7 @@ export function createApp(): Express {
   app.use("/api/auth", authRouter);
   app.use("/api/categories", categoryRouter);
   app.use("/api/transactions", transactionRouter);
+  app.use("/api/budgets", budgetRouter);
 
   app.use(notFound);
   app.use(errorHandler);

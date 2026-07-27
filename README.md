@@ -65,7 +65,7 @@ npm run dev
 - [x] M1 — Mongo connection + User model
 - [x] M2 — Auth (signup/login/refresh/logout)
 - [x] M3 — Categories & Transactions CRUD
-- [ ] M4 — Budgets
+- [x] M4 — Budgets
 - [ ] M5 — Recurring transactions
 - [ ] M6 — Charts & dashboard
 - [ ] M7 — Polish, tests, seed data
