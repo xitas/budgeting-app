@@ -111,7 +111,7 @@ export function BudgetsPanel() {
   const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
 
   const { data: categories } = useCategories();
-  const { data: budgets, isLoading } = useBudgets(month, year);
+  const { data: budgets, isLoading, isError } = useBudgets(month, year);
   const updateBudget = useUpdateBudget();
   const deleteBudget = useDeleteBudget();
 
@@ -196,6 +196,8 @@ export function BudgetsPanel() {
       <div className="mb-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         {isLoading ? (
           <p className="text-sm text-slate-500">Loading...</p>
+        ) : isError ? (
+          <p className="text-sm text-red-600">Couldn&apos;t load budgets. Try refreshing the page.</p>
         ) : !budgets || budgets.length === 0 ? (
           <p className="text-sm text-slate-500">No budgets set for this month yet.</p>
         ) : (

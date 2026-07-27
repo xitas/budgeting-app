@@ -49,3 +49,21 @@ Generation is lazy + cron-backed:
   server wasn't running when a transaction was due — useful in local dev.
 - Generation is idempotent: it only creates transactions between
   `lastGeneratedDate` and "now", then advances the cursor.
+
+## Dashboard aggregations
+
+All four `/api/dashboard/*` endpoints are read-only aggregation pipelines over
+`Transaction` (plus one that reuses the existing budget service) — nothing is
+precomputed or denormalized:
+
+- **Summary** (`/summary`): a single `$facet` computes income and expense
+  totals for the month in one round trip.
+- **Spending by category** (`/spending-by-category`): `$match` + `$group` +
+  `$lookup` joins each category's name/color in the same pipeline; anything
+  past the top 7 categories folds into an "Other" bucket, since the
+  categorical color palette caps at 8 usable identity slots.
+- **Income vs expense trend** (`/income-vs-expense`): `$group` by
+  `{ $year, $month, type }` over a trailing window, then zero-filled in JS so
+  a quiet month renders as 0 rather than a gap.
+- **Budget vs actual** (`/budget-vs-actual`): reuses `budget.service.ts`'s
+  existing spent/remaining calculation rather than duplicating it.

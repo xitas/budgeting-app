@@ -27,10 +27,11 @@ export function DashboardPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
 
-  const { data: summary } = useDashboardSummary(month, year);
-  const { data: spending } = useSpendingByCategory(month, year);
-  const { data: trend } = useIncomeVsExpense(month, year, 6);
-  const { data: budgets } = useBudgetVsActual(month, year);
+  const { data: summary, isError: summaryError } = useDashboardSummary(month, year);
+  const { data: spending, isError: spendingError } = useSpendingByCategory(month, year);
+  const { data: trend, isError: trendError } = useIncomeVsExpense(month, year, 6);
+  const { data: budgets, isError: budgetsError } = useBudgetVsActual(month, year);
+  const hasError = summaryError || spendingError || trendError || budgetsError;
 
   function goToMonth(delta: number): void {
     let nextMonth = month + delta;
@@ -65,6 +66,12 @@ export function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {hasError && (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          Some dashboard data couldn&apos;t load. Try refreshing the page.
+        </p>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile label="Income" value={(summary?.income ?? 0).toFixed(2)} tone="positive" />

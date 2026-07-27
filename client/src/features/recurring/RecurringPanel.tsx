@@ -110,7 +110,7 @@ function AddRecurringForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function RecurringPanel() {
-  const { data: recurring, isLoading } = useRecurring();
+  const { data: recurring, isLoading, isError } = useRecurring();
   const updateRecurring = useUpdateRecurring();
   const deleteRecurring = useDeleteRecurring();
   const runNow = useRunRecurringNow();
@@ -181,6 +181,8 @@ export function RecurringPanel() {
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         {isLoading ? (
           <p className="text-sm text-slate-500">Loading...</p>
+        ) : isError ? (
+          <p className="text-sm text-red-600">Couldn&apos;t load recurring transactions. Try refreshing the page.</p>
         ) : !recurring || recurring.length === 0 ? (
           <p className="text-sm text-slate-500">No recurring transactions set up yet.</p>
         ) : (

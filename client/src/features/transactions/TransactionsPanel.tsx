@@ -98,7 +98,7 @@ export function TransactionsPanel() {
   const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
 
   const { data: categories } = useCategories();
-  const { data, isLoading } = useTransactions(filters);
+  const { data, isLoading, isError } = useTransactions(filters);
   const updateTransaction = useUpdateTransaction();
   const deleteTransaction = useDeleteTransaction();
 
@@ -223,6 +223,12 @@ export function TransactionsPanel() {
               <tr>
                 <td colSpan={5} className="p-4 text-sm text-slate-500">
                   Loading...
+                </td>
+              </tr>
+            ) : isError ? (
+              <tr>
+                <td colSpan={5} className="p-4 text-sm text-red-600">
+                  Couldn&apos;t load transactions. Try refreshing the page.
                 </td>
               </tr>
             ) : !data || data.items.length === 0 ? (

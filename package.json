@@ -15,6 +15,7 @@
     "dev:client": "npm run dev --workspace=client",
     "build": "npm run build --workspace=shared && npm run build --workspace=server && npm run build --workspace=client",
     "lint": "npm run lint --workspace=server && npm run lint --workspace=client",
+    "test": "npm run test --workspace=server && npm run test --workspace=client",
     "mongo:up": "docker compose up -d",
     "mongo:down": "docker compose down"
   },

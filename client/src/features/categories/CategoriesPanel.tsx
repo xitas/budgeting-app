@@ -161,7 +161,7 @@ function CategoryRow({
 }
 
 export function CategoriesPanel() {
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading, isError } = useCategories();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -243,6 +243,8 @@ export function CategoriesPanel() {
 
       {isLoading ? (
         <p className="text-sm text-slate-500">Loading...</p>
+      ) : isError ? (
+        <p className="text-sm text-red-600">Couldn&apos;t load categories. Try refreshing the page.</p>
       ) : (
         <div className="space-y-4">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
