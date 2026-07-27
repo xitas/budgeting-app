@@ -70,8 +70,9 @@ userSchema.method("comparePassword", function comparePassword(this: UserDocument
 });
 
 userSchema.set("toJSON", {
+  virtuals: true,
   transform: (_doc, ret) => {
-    const { passwordHash, __v, ...rest } = ret;
+    const { passwordHash, __v, _id, ...rest } = ret;
     return rest;
   },
 });
