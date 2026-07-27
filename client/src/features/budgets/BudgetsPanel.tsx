@@ -7,6 +7,7 @@ import { buttonClass, inputClass } from "../../components/ui/formStyles";
 import { PencilIcon, PlusIcon, TrashIcon } from "../../components/ui/icons";
 import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
+import { ProgressBar } from "../../components/ui/ProgressBar";
 import { extractErrorMessage } from "../../lib/errors";
 import { useCategories } from "../categories/hooks";
 import { useBudgets, useCreateBudget, useDeleteBudget, useUpdateBudget } from "./hooks";
@@ -33,20 +34,6 @@ const budgetFormSchema = z.object({
 });
 
 type BudgetFormValues = z.infer<typeof budgetFormSchema>;
-
-function ProgressBar({ spent, limit, color }: { spent: number; limit: number; color: string }) {
-  const percent = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
-  const overBudget = spent > limit;
-
-  return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-      <div
-        className="h-full rounded-full transition-all duration-300"
-        style={{ width: `${percent}%`, backgroundColor: overBudget ? "#e34948" : color }}
-      />
-    </div>
-  );
-}
 
 function AddBudgetForm({
   month,
@@ -235,7 +222,7 @@ export function BudgetsPanel() {
                       </span>
                     )}
                   </div>
-                  <ProgressBar spent={b.spent} limit={isEditing && draftLimit !== "" ? Number(draftLimit) : b.limit} color={b.category.color} />
+                  <ProgressBar value={b.spent} max={isEditing && draftLimit !== "" ? Number(draftLimit) : b.limit} color={b.category.color} />
                   <div className="mt-1 flex items-center justify-between text-xs">
                     <span className={overBudget ? "text-red-600" : "text-slate-400"}>
                       {overBudget ? `Over by ${(b.spent - b.limit).toFixed(2)}` : `${b.remaining.toFixed(2)} remaining`}

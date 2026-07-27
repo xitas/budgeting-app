@@ -73,9 +73,14 @@ export function DashboardPage() {
         </p>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatTile label="Income" value={(summary?.income ?? 0).toFixed(2)} tone="positive" />
         <StatTile label="Expense" value={(summary?.expense ?? 0).toFixed(2)} tone="negative" />
+        <StatTile
+          label="Net lending"
+          value={(summary?.netLending ?? 0).toFixed(2)}
+          tone={summary && summary.netLending < 0 ? "negative" : "neutral"}
+        />
         <StatTile
           label="Net"
           value={(summary?.net ?? 0).toFixed(2)}

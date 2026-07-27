@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { BudgetsPanel } from "../features/budgets/BudgetsPanel";
 import { CategoriesPanel } from "../features/categories/CategoriesPanel";
+import { LoansPanel } from "../features/loans/LoansPanel";
 import { RecurringPanel } from "../features/recurring/RecurringPanel";
 import { TransactionsPanel } from "../features/transactions/TransactionsPanel";
 
-type RightTab = "budgets" | "categories" | "recurring";
+type RightTab = "budgets" | "categories" | "recurring" | "loans";
 
 const TABS: { key: RightTab; label: string }[] = [
   { key: "budgets", label: "Budgets" },
   { key: "categories", label: "Categories" },
   { key: "recurring", label: "Recurring" },
+  { key: "loans", label: "Loans" },
 ];
 
 export function WorkspacePage() {
@@ -20,7 +22,7 @@ export function WorkspacePage() {
       <TransactionsPanel />
 
       <div className="flex-1 lg:max-w-md">
-        <div className="mb-4 inline-flex rounded-full bg-slate-100 p-1">
+        <div className="mb-4 inline-flex flex-wrap rounded-full bg-slate-100 p-1">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -38,6 +40,7 @@ export function WorkspacePage() {
         {rightTab === "budgets" && <BudgetsPanel />}
         {rightTab === "categories" && <CategoriesPanel />}
         {rightTab === "recurring" && <RecurringPanel />}
+        {rightTab === "loans" && <LoansPanel />}
       </div>
     </div>
   );

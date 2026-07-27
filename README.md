@@ -34,11 +34,18 @@ real transactions over time, with manual "run now" and pause/resume.
 
 ![Recurring](docs/screenshots/recurring.png)
 
+**Loans** — money lent to or borrowed from someone, tracked as a real linked
+transaction (so it affects actual balance, not a side ledger), with partial
+repayments, a running outstanding balance, and write-off for debt that won't
+be repaid.
+
+![Loans](docs/screenshots/loans.png)
+
 ## Tech stack
 
 - **Client**: React 19, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, React Hook Form + Zod, Recharts
 - **Server**: Node.js, Express, TypeScript, Mongoose, JWT auth (access + refresh tokens), Zod validation, node-cron
-- **Database**: MongoDB (local via Docker for development)
+- **Database**: MongoDB (local via Docker, single-node replica set to support multi-document transactions)
 - **Testing**: Vitest + Supertest (server integration tests against a real MongoDB), Vitest (client unit tests)
 - **Monorepo**: npm workspaces (`client/`, `server/`, `shared/`)
 
@@ -51,7 +58,11 @@ the textbook case for referencing), while `RecurringTransaction` acts as a
 small, stable template document that generates `Transaction` rows over time.
 Budget-vs-actual spend and the dashboard charts are never denormalized —
 they're computed live via MongoDB aggregation pipelines (`$match`, `$group`,
-`$facet`, `$lookup`) so they can never go stale. See
+`$facet`, `$lookup`) so they can never go stale. Loans flip the pattern on its
+head: a loan's repayments are bounded and always read with their parent, so
+they're *embedded* subdocuments rather than referenced — and creating/repaying/
+deleting a loan writes to both the loan and a linked transaction atomically via
+a real MongoDB multi-document transaction. See
 [docs/architecture.md](docs/architecture.md) for more detail.
 
 ## Project structure
@@ -121,7 +132,7 @@ data) and the client suite. Requires `npm run mongo:up` first.
 - [x] M5 — Recurring transactions
 - [x] M6 — Charts & dashboard
 - [x] M7 — Polish, tests, seed data
-- [ ] M8 — Loans (money lent to / borrowed from someone — party, principal, running balance, repayments)
+- [x] M8 — Loans (money lent to / borrowed from someone — party, principal, running balance, repayments)
 
 **Future work**: password reset, CSV import/export, dark mode, CI (GitHub Actions), live deployment.
 

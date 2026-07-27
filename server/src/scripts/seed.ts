@@ -2,10 +2,12 @@ import mongoose from "mongoose";
 import { connectDb } from "../config/db";
 import { Budget } from "../models/Budget";
 import { Category, CategoryDocument } from "../models/Category";
+import { Loan } from "../models/Loan";
 import { RecurringTransaction } from "../models/RecurringTransaction";
 import { Transaction } from "../models/Transaction";
 import { User } from "../models/User";
 import { seedDefaultCategories } from "../services/category.service";
+import * as loanService from "../services/loan.service";
 import { generateDueTransactions } from "../services/recurring.service";
 
 const DEMO_EMAIL = "demo@example.com";
@@ -21,6 +23,7 @@ async function wipeExistingDemoUser(): Promise<void> {
     Category.deleteMany({ user: existing._id }),
     Budget.deleteMany({ user: existing._id }),
     RecurringTransaction.deleteMany({ user: existing._id }),
+    Loan.deleteMany({ user: existing._id }),
   ]);
   await existing.deleteOne();
 }
@@ -186,6 +189,24 @@ async function seed(): Promise<void> {
     { user: user._id, category: categoryByName("Entertainment")._id, limit: 50, month: now.getMonth() + 1, year: now.getFullYear() },
     { user: user._id, category: categoryByName("Transportation")._id, limit: 150, month: now.getMonth() + 1, year: now.getFullYear() },
   ]);
+
+  // A couple of loans, showcasing both directions and a partial repayment.
+  const lentLoan = await loanService.createLoan(user.id, {
+    counterparty: "Jordan",
+    direction: "lent",
+    principal: 400,
+    description: "Covered concert tickets",
+    date: daysAgo(20),
+  });
+  await loanService.addRepayment(user.id, lentLoan.id, { amount: 150, date: daysAgo(5) });
+
+  await loanService.createLoan(user.id, {
+    counterparty: "Morgan",
+    direction: "borrowed",
+    principal: 250,
+    description: "Car repair help",
+    date: daysAgo(10),
+  });
 
   console.log(`Seeded demo user -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
   await mongoose.disconnect();

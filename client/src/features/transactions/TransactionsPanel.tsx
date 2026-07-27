@@ -311,18 +311,20 @@ export function TransactionsPanel() {
                             <button
                               type="button"
                               onClick={() => startEdit(tx)}
+                              disabled={tx.source === "loan"}
                               aria-label="Edit transaction"
-                              title="Edit"
-                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                              title={tx.source === "loan" ? "Managed in the Loans tab" : "Edit"}
+                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
                             >
                               <PencilIcon className="h-4 w-4" />
                             </button>
                             <button
                               type="button"
                               onClick={() => void handleDelete(tx.id)}
+                              disabled={tx.source === "loan"}
                               aria-label="Delete transaction"
-                              title="Delete"
-                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                              title={tx.source === "loan" ? "Managed in the Loans tab" : "Delete"}
+                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
                             >
                               <TrashIcon className="h-4 w-4" />
                             </button>

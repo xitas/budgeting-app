@@ -1,6 +1,10 @@
 export type TransactionType = "income" | "expense";
 
-export type TransactionSource = "manual" | "recurring";
+export type TransactionSource = "manual" | "recurring" | "loan";
+
+export type LoanDirection = "lent" | "borrowed";
+
+export type LoanStatus = "open" | "settled" | "written_off";
 
 export type RecurringFrequency = "daily" | "weekly" | "monthly";
 

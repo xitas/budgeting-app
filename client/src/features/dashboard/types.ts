@@ -1,7 +1,8 @@
 export interface DashboardSummary {
-  income: number;
-  expense: number;
-  net: number;
+  income: number; // non-loan income only
+  expense: number; // non-loan expense only
+  netLending: number; // loan income − loan expense this month (can be negative)
+  net: number; // income − expense + netLending
 }
 
 export interface CategorySpending {

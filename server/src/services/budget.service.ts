@@ -25,9 +25,13 @@ interface PopulatedCategory {
 // $match narrows to this user's expenses in the month, $group sums them per
 // category in one round trip — the "real MongoDB" alternative to fetching
 // every transaction and reducing in JS.
+// UTC boundaries (see dashboard.service.ts's monthRange for the full
+// reasoning) — kept consistent even though this function doesn't itself
+// group by calendar month, so the convention doesn't silently diverge
+// across the two files that compute a "spend for month X" figure.
 async function getSpentByCategory(userId: string, month: number, year: number): Promise<Map<string, number>> {
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 1);
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const end = new Date(Date.UTC(year, month, 1));
 
   const results = await Transaction.aggregate<{ _id: Types.ObjectId; spent: number }>([
     { $match: { user: new Types.ObjectId(userId), type: "expense", date: { $gte: start, $lt: end } } },

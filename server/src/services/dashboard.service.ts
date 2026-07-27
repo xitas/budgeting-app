@@ -3,9 +3,10 @@ import { Transaction } from "../models/Transaction";
 import { currentMonthYear } from "../utils/date";
 
 export interface DashboardSummary {
-  income: number;
-  expense: number;
-  net: number;
+  income: number; // non-loan income only
+  expense: number; // non-loan expense only
+  netLending: number; // loan income − loan expense this month (can be negative)
+  net: number; // income − expense + netLending (== true total income − total expense)
 }
 
 export interface CategorySpending {
@@ -21,35 +22,59 @@ export interface MonthlyTrendPoint {
   expense: number;
 }
 
+// UTC, not the local-time Date constructor: getIncomeVsExpenseTrend below
+// groups by MongoDB's $year/$month operators, which extract in UTC — if the
+// range boundaries were built in local time, a transaction dated the 1st of
+// a month could land in the wrong UTC month on any machine with a non-zero
+// timezone offset (e.g. local midnight July 1st at UTC+5 is still June 30th
+// in UTC). Building both the boundaries and the grouping in UTC keeps them
+// in agreement regardless of the server's local timezone.
 function monthRange(month: number, year: number): { start: Date; end: Date } {
-  return { start: new Date(year, month - 1, 1), end: new Date(year, month, 1) };
+  return { start: new Date(Date.UTC(year, month - 1, 1)), end: new Date(Date.UTC(year, month, 1)) };
 }
 
 export function resolveMonthYear(month?: number, year?: number): { month: number; year: number } {
   return month && year ? { month, year } : currentMonthYear();
 }
 
-// A single $facet computes both totals in one round trip instead of two
-// separate queries.
+// A single $facet computes all four totals in one round trip. Loan cash
+// flow is split out of income/expense (those are *behavior* numbers, same
+// as the spending-by-category and trend charts below, and must agree with
+// them) into its own netLending figure — only `net` needs the full picture:
+// Income − Expense + Net lending = Net, and that arithmetic must visibly
+// close for anyone reading the dashboard.
 export async function getSummary(userId: string, month: number, year: number): Promise<DashboardSummary> {
   const { start, end } = monthRange(month, year);
 
   const [result] = await Transaction.aggregate<{
     income: { total: number }[];
     expense: { total: number }[];
+    loanIncome: { total: number }[];
+    loanExpense: { total: number }[];
   }>([
     { $match: { user: new Types.ObjectId(userId), date: { $gte: start, $lt: end } } },
     {
       $facet: {
-        income: [{ $match: { type: "income" } }, { $group: { _id: null, total: { $sum: "$amount" } } }],
-        expense: [{ $match: { type: "expense" } }, { $group: { _id: null, total: { $sum: "$amount" } } }],
+        income: [
+          { $match: { type: "income", source: { $ne: "loan" } } },
+          { $group: { _id: null, total: { $sum: "$amount" } } },
+        ],
+        expense: [
+          { $match: { type: "expense", source: { $ne: "loan" } } },
+          { $group: { _id: null, total: { $sum: "$amount" } } },
+        ],
+        loanIncome: [{ $match: { type: "income", source: "loan" } }, { $group: { _id: null, total: { $sum: "$amount" } } }],
+        loanExpense: [{ $match: { type: "expense", source: "loan" } }, { $group: { _id: null, total: { $sum: "$amount" } } }],
       },
     },
   ]);
 
   const income = result?.income[0]?.total ?? 0;
   const expense = result?.expense[0]?.total ?? 0;
-  return { income, expense, net: income - expense };
+  const loanIncome = result?.loanIncome[0]?.total ?? 0;
+  const loanExpense = result?.loanExpense[0]?.total ?? 0;
+  const netLending = loanIncome - loanExpense;
+  return { income, expense, netLending, net: income - expense + netLending };
 }
 
 const SPENDING_TOP_N = 7;
@@ -63,7 +88,10 @@ export async function getSpendingByCategory(userId: string, month: number, year:
     amount: number;
     category: { name: string; color: string }[];
   }>([
-    { $match: { user: new Types.ObjectId(userId), type: "expense", date: { $gte: start, $lt: end } } },
+    // Loans are asset transfers, not spending behavior — excluded here (and
+    // from the trend below) so a single large loan doesn't dominate the
+    // category breakdown or misrepresent discretionary spending.
+    { $match: { user: new Types.ObjectId(userId), type: "expense", source: { $ne: "loan" }, date: { $gte: start, $lt: end } } },
     { $group: { _id: "$category", amount: { $sum: "$amount" } } },
     { $sort: { amount: -1 } },
     { $lookup: { from: "categories", localField: "_id", foreignField: "_id", as: "category" } },
@@ -95,14 +123,14 @@ export async function getIncomeVsExpenseTrend(
   year: number,
   monthsBack: number
 ): Promise<MonthlyTrendPoint[]> {
-  const end = new Date(year, month, 1);
-  const start = new Date(year, month - monthsBack, 1);
+  const end = new Date(Date.UTC(year, month, 1));
+  const start = new Date(Date.UTC(year, month - monthsBack, 1));
 
   const results = await Transaction.aggregate<{
     _id: { year: number; month: number; type: "income" | "expense" };
     total: number;
   }>([
-    { $match: { user: new Types.ObjectId(userId), date: { $gte: start, $lt: end } } },
+    { $match: { user: new Types.ObjectId(userId), source: { $ne: "loan" }, date: { $gte: start, $lt: end } } },
     {
       $group: {
         _id: { year: { $year: "$date" }, month: { $month: "$date" }, type: "$type" },
@@ -115,8 +143,8 @@ export async function getIncomeVsExpenseTrend(
   // transactions shows as 0, not as a gap.
   const points: MonthlyTrendPoint[] = [];
   for (let i = monthsBack - 1; i >= 0; i--) {
-    const d = new Date(year, month - 1 - i, 1);
-    points.push({ month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, income: 0, expense: 0 });
+    const d = new Date(Date.UTC(year, month - 1 - i, 1));
+    points.push({ month: `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`, income: 0, expense: 0 });
   }
   const indexByKey = new Map(points.map((p, idx) => [p.month, idx]));
 

@@ -14,7 +14,7 @@ export interface Transaction {
   type: TransactionType;
   description: string;
   date: string;
-  source: "manual" | "recurring";
+  source: "manual" | "recurring" | "loan";
 }
 
 export interface TransactionFilters {

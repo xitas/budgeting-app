@@ -1,7 +1,35 @@
 services:
+  # Generates the replica-set internal-auth keyfile into a Docker-managed
+  # volume (once, ever) and fixes its ownership/permissions from inside a
+  # Linux container. Deliberately NOT bind-mounted from the host: on Windows,
+  # Docker Desktop can't reliably produce the strict 0600-owned-by-mongodb
+  # permissions MongoDB requires on a keyfile, which is a well-known source
+  # of "permissions too open" startup failures.
+  mongo-keyfile-init:
+    image: mongo:7
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        if [ ! -f /keyfile/mongo-keyfile ]; then
+          head -c 756 /dev/urandom | base64 > /keyfile/mongo-keyfile
+          chmod 600 /keyfile/mongo-keyfile
+          chown 999:999 /keyfile/mongo-keyfile
+        fi
+    volumes:
+      - mongo-keyfile:/keyfile
+
   mongo:
     image: mongo:7
     restart: unless-stopped
+    depends_on:
+      mongo-keyfile-init:
+        condition: service_completed_successfully
+    # Single-node replica set (not a plain standalone) so the driver can use
+    # multi-document transactions — required for M8's Loan+Transaction writes
+    # to commit atomically. A standalone mongod cannot run withTransaction().
+    # --keyFile is required once both --replSet and auth (root user below)
+    # are in play — replica set members authenticate to each other with it.
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/keyfile/mongo-keyfile"]
     ports:
       - "${MONGO_PORT:-27017}:27017"
     environment:
@@ -9,8 +37,31 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
     volumes:
       - mongo-data:/data/db
+      - mongo-keyfile:/keyfile
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      # NOTE: advertises localhost:27017 as the member address. That's correct
+      # for this project's current shape (the API runs on the host against
+      # Mongo's published port) but will NOT work for a client connecting
+      # from inside another container — from there, "localhost" means that
+      # container's own loopback, not this one. Revisit if the API is ever
+      # dockerized or this stack runs in CI inside its own network.
+      # rs.initiate() only actually runs once, ever — the replica set config
+      # lives in Mongo's own `local` database (part of the mongo-data
+      # volume), so every check after the first is just the try branch.
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "-u",
+          "${MONGO_ROOT_USER:-root}",
+          "-p",
+          "${MONGO_ROOT_PASSWORD:-changeme}",
+          "--authenticationDatabase",
+          "admin",
+          "--quiet",
+          "--eval",
+          "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}).ok }",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,3 +82,4 @@ services:
 
 volumes:
   mongo-data:
+  mongo-keyfile:

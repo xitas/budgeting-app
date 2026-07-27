@@ -58,6 +58,18 @@ async function assertCategoryOwnedByUser(userId: string, categoryId: string): Pr
   }
 }
 
+// Loan.principal/repayment amounts are a derived invariant tied to their
+// linked transaction's amount — editing/deleting that transaction directly
+// would desync a Loan's outstanding balance from reality with no path back.
+// Recurring-sourced transactions aren't guarded the same way: a recurring
+// instance has no aggregate invariant riding on it, so editing one directly
+// is harmless and stays unrestricted.
+function assertNotLoanSourced(transaction: TransactionDocument): void {
+  if (transaction.source === "loan") {
+    throw new AppError(409, "This transaction was created by a loan — edit or delete it from the Loans tab instead.");
+  }
+}
+
 export async function createTransaction(userId: string, input: CreateTransactionInput): Promise<TransactionDocument> {
   await assertCategoryOwnedByUser(userId, input.category);
   const transaction = await Transaction.create({ ...input, user: userId, source: "manual" });
@@ -73,6 +85,7 @@ export async function updateTransaction(
   if (!transaction) {
     throw new AppError(404, "Transaction not found");
   }
+  assertNotLoanSourced(transaction);
 
   if (updates.category) {
     await assertCategoryOwnedByUser(userId, updates.category);
@@ -88,5 +101,6 @@ export async function deleteTransaction(userId: string, transactionId: string): 
   if (!transaction) {
     throw new AppError(404, "Transaction not found");
   }
+  assertNotLoanSourced(transaction);
   await transaction.deleteOne();
 }
