@@ -64,7 +64,7 @@ npm run dev
 - [x] M0 — Project scaffold, Docker Mongo, health check end-to-end
 - [x] M1 — Mongo connection + User model
 - [x] M2 — Auth (signup/login/refresh/logout)
-- [ ] M3 — Categories & Transactions CRUD
+- [x] M3 — Categories & Transactions CRUD
 - [ ] M4 — Budgets
 - [ ] M5 — Recurring transactions
 - [ ] M6 — Charts & dashboard

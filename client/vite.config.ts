@@ -8,4 +8,11 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  // "shared" is a linked npm workspace package built to CommonJS. Vite
+  // doesn't run its CJS->ESM named-export interop on linked workspace
+  // packages by default (only on real node_modules deps), so without this
+  // its named exports silently resolve to `undefined` in the browser.
+  optimizeDeps: {
+    include: ["shared"],
+  },
 })

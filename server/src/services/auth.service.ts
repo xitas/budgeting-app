@@ -3,6 +3,7 @@ import { env } from "../config/env";
 import { User, UserDocument } from "../models/User";
 import { AppError } from "../utils/AppError";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
+import { seedDefaultCategories } from "./category.service";
 
 const REFRESH_COOKIE_NAME = "refreshToken";
 const REFRESH_COOKIE_PATH = "/api/auth";
@@ -43,6 +44,7 @@ export async function signup(email: string, password: string, name: string): Pro
   const user = new User({ email, name });
   (user as unknown as { password: string }).password = password;
   await user.save();
+  await seedDefaultCategories(user.id);
 
   return { user, ...issueTokens(user) };
 }

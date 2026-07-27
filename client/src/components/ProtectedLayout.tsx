@@ -1,8 +1,8 @@
-import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { NavBar } from "./NavBar";
 
-export function ProtectedRoute({ children }: { children: ReactNode }) {
+export function ProtectedLayout() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -13,5 +13,10 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <NavBar />
+      <Outlet />
+    </div>
+  );
 }
