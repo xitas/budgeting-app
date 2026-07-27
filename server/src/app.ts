@@ -10,6 +10,7 @@ import { notFound } from "./middleware/notFound";
 import { authRouter } from "./routes/auth.routes";
 import { budgetRouter } from "./routes/budget.routes";
 import { categoryRouter } from "./routes/category.routes";
+import { dashboardRouter } from "./routes/dashboard.routes";
 import { healthRouter } from "./routes/health.routes";
 import { recurringRouter } from "./routes/recurring.routes";
 import { transactionRouter } from "./routes/transaction.routes";
@@ -31,6 +32,7 @@ export function createApp(): Express {
   app.use("/api/transactions", transactionRouter);
   app.use("/api/budgets", budgetRouter);
   app.use("/api/recurring", recurringRouter);
+  app.use("/api/dashboard", dashboardRouter);
 
   app.use(notFound);
   app.use(errorHandler);

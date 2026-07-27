@@ -3,6 +3,7 @@ import { Budget, BudgetDocument } from "../models/Budget";
 import { Category } from "../models/Category";
 import { Transaction } from "../models/Transaction";
 import { AppError } from "../utils/AppError";
+import { currentMonthYear } from "../utils/date";
 import { CreateBudgetInput, UpdateBudgetInput } from "../validation/budget.validation";
 
 export interface BudgetWithSpent {
@@ -19,11 +20,6 @@ interface PopulatedCategory {
   _id: Types.ObjectId;
   name: string;
   color: string;
-}
-
-function currentMonthYear(): { month: number; year: number } {
-  const now = new Date();
-  return { month: now.getMonth() + 1, year: now.getFullYear() };
 }
 
 // $match narrows to this user's expenses in the month, $group sums them per
