@@ -39,7 +39,7 @@ export function ForgotPasswordPage() {
       )}
       <p className="mt-4 text-sm text-slate-600">
         Remembered it?{" "}
-        <Link to="/login" className="text-blue-600 hover:underline">
+        <Link to="/login" className="text-link hover:underline">
           Log in
         </Link>
       </p>
@@ -114,7 +114,7 @@ function EnterCodeStep({ email, onChangeEmail }: { email: string; onChangeEmail:
       <p className="text-sm text-slate-600">
         If an account exists for <span className="font-medium text-slate-900">{email}</span>, we sent it a code.
         It expires in 15 minutes.{" "}
-        <button type="button" onClick={onChangeEmail} className="text-blue-600 hover:underline">
+        <button type="button" onClick={onChangeEmail} className="text-link hover:underline">
           Use a different email
         </button>
       </p>
@@ -138,7 +138,7 @@ function EnterCodeStep({ email, onChangeEmail }: { email: string; onChangeEmail:
       <button type="submit" disabled={isSubmitting} className={`${buttonClass} w-full`}>
         {isSubmitting ? "Resetting..." : "Reset password"}
       </button>
-      <button type="button" onClick={() => void resend()} className="text-sm text-blue-600 hover:underline">
+      <button type="button" onClick={() => void resend()} className="text-sm text-link hover:underline">
         Resend code
       </button>
     </form>

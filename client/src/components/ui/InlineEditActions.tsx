@@ -15,7 +15,7 @@ export function InlineEditActions({ onSave, onCancel, isSaving }: InlineEditActi
         disabled={isSaving}
         aria-label="Save"
         title="Save"
-        className="rounded-md p-1.5 text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50"
+        className="rounded-md p-1.5 text-link transition-colors hover:bg-blue-50 disabled:opacity-50"
       >
         <CheckIcon className={`h-4 w-4 ${isSaving ? "animate-pulse" : ""}`} />
       </button>

@@ -49,7 +49,7 @@ export function LoginPage() {
         <Field label="Password" error={errors.password?.message}>
           <input type="password" className={inputClass} {...register("password")} />
         </Field>
-        <Link to="/forgot-password" className="block text-sm text-blue-600 hover:underline">
+        <Link to="/forgot-password" className="block text-sm text-link hover:underline">
           Forgot password?
         </Link>
         {serverError && <p className="text-sm text-red-600">{serverError}</p>}
@@ -59,7 +59,7 @@ export function LoginPage() {
       </form>
       <p className="mt-4 text-sm text-slate-600">
         Don&apos;t have an account?{" "}
-        <Link to="/signup" className="text-blue-600 hover:underline">
+        <Link to="/signup" className="text-link hover:underline">
           Sign up
         </Link>
       </p>

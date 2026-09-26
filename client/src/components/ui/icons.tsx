@@ -61,3 +61,32 @@ export function RefreshIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function SunIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={className}>
+      <circle cx="10" cy="10" r="3.5" />
+      <path
+        d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.3 4.3l1.1 1.1M14.6 14.6l1.1 1.1M4.3 15.7l1.1-1.1M14.6 5.4l1.1-1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function MoonIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={className}>
+      <path d="M16.5 12.5A7 7 0 017.5 3.5a7 7 0 109 9z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function MonitorIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" className={className}>
+      <rect x="2.5" y="3.5" width="15" height="10" rx="1.5" />
+      <path d="M7 17h6M10 13.5V17" strokeLinecap="round" />
+    </svg>
+  );
+}

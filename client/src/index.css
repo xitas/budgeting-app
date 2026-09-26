@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+/* App-specific tokens. `surface` is the card/panel background (formerly
+   bg-white) and `link` is the text-link blue (formerly text-blue-600) — split
+   out from `white` and `blue-600` because those also paint button text and
+   button fills, which must NOT change in dark mode. */
+@theme {
+  --color-surface: #ffffff;
+  --color-link: var(--color-blue-600);
+}
+
+/* Dark mode: the `dark` class on <html> (set before first paint by the
+   script in index.html, then kept in sync by ThemeProvider). Rather than a
+   dark: variant on every class, the neutral scale is re-stepped for a dark
+   surface — slate-50 (page) goes darkest, slate-900 (primary text) goes
+   lightest — so existing classes keep their role in both modes. Status tints
+   get dark equivalents with enough contrast on the dark surface. */
+.dark {
+  color-scheme: dark; /* native inputs, date pickers, selects, scrollbars */
+
+  --color-surface: #161f2e;
+  --color-link: #60a5fa;
+
+  --color-slate-50: #0b1220;
+  --color-slate-100: #1f2a3c;
+  --color-slate-200: #2a3649;
+  --color-slate-300: #3a475c;
+  --color-slate-400: #7c8aa0;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #b4c0d0;
+  --color-slate-700: #cbd5e1;
+  --color-slate-800: #e2e8f0;
+  --color-slate-900: #f1f5f9;
+
+  --color-blue-50: #172554;
+
+  --color-red-50: #3b1219;
+  --color-red-200: #7f1d1d;
+  --color-red-600: #f87171;
+
+  --color-green-50: #0f2e1c;
+  --color-green-700: #4ade80;
+  --color-green-800: #86efac;
+}
+
 body {
   margin: 0;
+  background-color: var(--color-slate-50);
+  color: var(--color-slate-900);
 }

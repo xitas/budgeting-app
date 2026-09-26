@@ -12,6 +12,7 @@ import { extractErrorMessage } from "../../lib/errors";
 import { useCategories } from "../categories/hooks";
 import { useBudgets, useCreateBudget, useDeleteBudget, useUpdateBudget } from "./hooks";
 import type { Budget } from "shared";
+import { useSchemeColor } from "../../context/ThemeContext";
 
 const MONTH_NAMES = [
   "January",
@@ -88,6 +89,7 @@ function AddBudgetForm({
 }
 
 export function BudgetsPanel() {
+  const schemeColor = useSchemeColor();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
@@ -180,7 +182,7 @@ export function BudgetsPanel() {
         </button>
       </div>
 
-      <div className="mb-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 rounded-lg border border-slate-200 bg-surface p-4 shadow-sm">
         {isLoading ? (
           <p className="text-sm text-slate-500">Loading...</p>
         ) : isError ? (
@@ -201,7 +203,7 @@ export function BudgetsPanel() {
                 >
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span className="flex items-center gap-1.5 font-medium text-slate-800">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: b.category.color }} />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: schemeColor(b.category.color) }} />
                       {b.category.name}
                     </span>
                     {isEditing ? (
@@ -222,7 +224,7 @@ export function BudgetsPanel() {
                       </span>
                     )}
                   </div>
-                  <ProgressBar value={b.spent} max={isEditing && draftLimit !== "" ? Number(draftLimit) : b.limit} color={b.category.color} />
+                  <ProgressBar value={b.spent} max={isEditing && draftLimit !== "" ? Number(draftLimit) : b.limit} color={schemeColor(b.category.color)} />
                   <div className="mt-1 flex items-center justify-between text-xs">
                     <span className={overBudget ? "text-red-600" : "text-slate-400"}>
                       {overBudget ? `Over by ${(b.spent - b.limit).toFixed(2)}` : `${b.remaining.toFixed(2)} remaining`}
@@ -236,7 +238,7 @@ export function BudgetsPanel() {
                           onClick={() => startEdit(b)}
                           aria-label="Edit budget"
                           title="Edit"
-                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link"
                         >
                           <PencilIcon className="h-3.5 w-3.5" />
                         </button>

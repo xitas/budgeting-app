@@ -35,7 +35,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   return createPortal(
     <div
       onClick={onClose}
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm transition-opacity duration-150 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm transition-opacity duration-150 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -44,7 +44,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className={`w-full max-w-md rounded-lg bg-white p-6 shadow-xl transition-all duration-150 ${
+        className={`w-full max-w-md rounded-lg bg-surface p-6 shadow-xl transition-all duration-150 ${
           isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
       >

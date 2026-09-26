@@ -28,6 +28,32 @@ export const CATEGORICAL_PALETTE = [
   "#e34948", // red
 ] as const;
 
+// The same eight hues stepped for a dark surface (validated against the dark
+// card color #161f2e: lightness band, CVD separation and >= 3:1 contrast all
+// pass). Same slot order as CATEGORICAL_PALETTE — never reorder one without
+// the other.
+export const CATEGORICAL_PALETTE_DARK = [
+  "#3987e5", // blue
+  "#d95926", // orange
+  "#199e70", // aqua
+  "#c98500", // yellow
+  "#d55181", // magenta
+  "#008300", // green
+  "#9085e9", // violet
+  "#e66767", // red
+] as const;
+
+export type ColorScheme = "light" | "dark";
+
+// Category colors are stored as their light-palette hex. In dark mode, a
+// stored palette color renders as its dark step (same slot, so identity is
+// kept); any custom color (picked freely on the web) passes through as-is.
+export function schemeColor(hex: string, scheme: ColorScheme): string {
+  if (scheme === "light") return hex;
+  const slot = CATEGORICAL_PALETTE.findIndex((c) => c.toLowerCase() === hex.toLowerCase());
+  return slot === -1 ? hex : CATEGORICAL_PALETTE_DARK[slot];
+}
+
 // API request/response shapes, shared by the web client and the mobile app.
 export * from "./api/auth";
 export * from "./api/budgets";

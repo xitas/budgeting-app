@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ThemeToggle } from "./ThemeToggle";
 
 function linkClass({ isActive }: { isActive: boolean }): string {
   return `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
@@ -11,7 +12,7 @@ export function NavBar() {
   const { user, logout } = useAuth();
 
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="border-b border-slate-200 bg-surface">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-8">
         <nav className="flex gap-2">
           <NavLink to="/" end className={linkClass}>
@@ -23,6 +24,7 @@ export function NavBar() {
         </nav>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-500 sm:inline">{user?.email}</span>
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => void logout()}

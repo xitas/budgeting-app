@@ -10,6 +10,7 @@ import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { extractErrorMessage } from "../../lib/errors";
 import { useCategories, useCreateCategory, useDeleteCategory, useUpdateCategory } from "./hooks";
+import { useSchemeColor } from "../../context/ThemeContext";
 
 const createCategorySchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -20,6 +21,9 @@ const createCategorySchema = z.object({
 type CreateCategoryFormValues = z.infer<typeof createCategorySchema>;
 
 function ColorSwatchPicker({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+  // Swatches display in the current scheme's step but always store the
+  // light-palette hex, so a category keeps one identity across modes.
+  const schemeColor = useSchemeColor();
   return (
     <div className="flex items-center gap-2">
       {CATEGORICAL_PALETTE.map((hex) => (
@@ -28,9 +32,9 @@ function ColorSwatchPicker({ value, onChange }: { value: string; onChange: (hex:
           type="button"
           onClick={() => onChange(hex)}
           className={`h-6 w-6 rounded-full transition-transform hover:scale-110 ${
-            value === hex ? "ring-2 ring-offset-2 ring-slate-400" : ""
+            value === hex ? "ring-2 ring-offset-2 ring-offset-surface ring-slate-400" : ""
           }`}
-          style={{ backgroundColor: hex }}
+          style={{ backgroundColor: schemeColor(hex) }}
           aria-label={`Choose color ${hex}`}
         />
       ))}
@@ -106,6 +110,7 @@ function CategoryRow({
   editError?: string;
   deleteError?: string;
 }) {
+  const schemeColor = useSchemeColor();
   if (isEditing) {
     return (
       <li className="space-y-2 rounded-md border-l-2 border-l-blue-400 bg-blue-50/50 px-2 py-2">
@@ -128,7 +133,7 @@ function CategoryRow({
   return (
     <li className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 transition-colors last:border-b-0 hover:bg-slate-50">
       <div className="flex items-center gap-2">
-        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color }} />
+        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: schemeColor(category.color) }} />
         <span className="text-sm text-slate-800">{category.name}</span>
         {category.isDefault && <span className="text-xs text-slate-400">default</span>}
       </div>
@@ -139,7 +144,7 @@ function CategoryRow({
             onClick={onStartEdit}
             aria-label="Edit category"
             title="Edit"
-            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+            className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link"
           >
             <PencilIcon className="h-3.5 w-3.5" />
           </button>
@@ -246,11 +251,11 @@ export function CategoriesPanel() {
         <p className="text-sm text-red-600">Couldn&apos;t load categories. Try refreshing the page.</p>
       ) : (
         <div className="space-y-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-lg border border-slate-200 bg-surface p-4 shadow-sm">
             <h2 className="mb-2 text-sm font-medium text-slate-700">Expense</h2>
             {renderList(expenseCategories)}
           </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-lg border border-slate-200 bg-surface p-4 shadow-sm">
             <h2 className="mb-2 text-sm font-medium text-slate-700">Income</h2>
             {renderList(incomeCategories)}
           </div>

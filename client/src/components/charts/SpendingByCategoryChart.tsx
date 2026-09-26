@@ -2,11 +2,11 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 import type { CategorySpending } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
+import { useChartTheme } from "./chartTheme";
 
-const GRID_COLOR = "#e1e0d9";
-const AXIS_COLOR = "#898781";
 
 export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) {
+  const theme = useChartTheme();
   if (data.length === 0) {
     return (
       <ChartCard title="Spending by category">
@@ -28,7 +28,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
           <tr key={row.categoryId} className="border-t border-slate-100">
             <td className="py-1.5">
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: row.color }} />
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: theme.color(row.color) }} />
                 {row.name}
               </span>
             </td>
@@ -43,19 +43,19 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
     <ChartCard title="Spending by category" tableView={tableView}>
       <ResponsiveContainer width="100%" height={Math.max(160, data.length * 36)}>
         <BarChart data={data} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
-          <XAxis type="number" tick={{ fontSize: 12, fill: AXIS_COLOR }} axisLine={{ stroke: GRID_COLOR }} tickLine={false} />
+          <XAxis type="number" tick={{ fontSize: 12, fill: theme.axis }} axisLine={{ stroke: theme.grid }} tickLine={false} />
           <YAxis
             type="category"
             dataKey="name"
             width={90}
-            tick={{ fontSize: 12, fill: AXIS_COLOR }}
-            axisLine={{ stroke: GRID_COLOR }}
+            tick={{ fontSize: 12, fill: theme.axis }}
+            axisLine={{ stroke: theme.grid }}
             tickLine={false}
           />
-          <Tooltip content={<ChartTooltip />} cursor={{ fill: "#f4f4f2" }} />
+          <Tooltip content={<ChartTooltip />} cursor={{ fill: theme.cursor }} />
           <Bar dataKey="amount" name="Spent" barSize={18} radius={[0, 4, 4, 0]}>
             {data.map((row) => (
-              <Cell key={row.categoryId} fill={row.color} />
+              <Cell key={row.categoryId} fill={theme.color(row.color)} />
             ))}
           </Bar>
         </BarChart>

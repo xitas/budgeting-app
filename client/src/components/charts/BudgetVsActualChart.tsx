@@ -2,10 +2,8 @@ import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis
 import type { BudgetVsActual } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
+import { useChartTheme } from "./chartTheme";
 
-const GRID_COLOR = "#e1e0d9";
-const AXIS_COLOR = "#898781";
-const OVER_BUDGET_COLOR = "#e34948";
 
 interface Row {
   name: string;
@@ -16,6 +14,7 @@ interface Row {
 }
 
 export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
+  const theme = useChartTheme();
   if (data.length === 0) {
     return (
       <ChartCard title="Budget vs actual">
@@ -26,7 +25,7 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
 
   const chartData: Row[] = data.map((b) => ({
     name: b.category.name,
-    color: b.category.color,
+    color: theme.color(b.category.color),
     percent: b.limit > 0 ? Math.round((b.spent / b.limit) * 100) : 0,
     spent: b.spent,
     limit: b.limit,
@@ -66,16 +65,16 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
             type="number"
             unit="%"
             domain={[0, (dataMax: number) => Math.max(100, dataMax)]}
-            tick={{ fontSize: 12, fill: AXIS_COLOR }}
-            axisLine={{ stroke: GRID_COLOR }}
+            tick={{ fontSize: 12, fill: theme.axis }}
+            axisLine={{ stroke: theme.grid }}
             tickLine={false}
           />
           <YAxis
             type="category"
             dataKey="name"
             width={90}
-            tick={{ fontSize: 12, fill: AXIS_COLOR }}
-            axisLine={{ stroke: GRID_COLOR }}
+            tick={{ fontSize: 12, fill: theme.axis }}
+            axisLine={{ stroke: theme.grid }}
             tickLine={false}
           />
           <Tooltip
@@ -90,12 +89,12 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
                 />
               );
             }}
-            cursor={{ fill: "#f4f4f2" }}
+            cursor={{ fill: theme.cursor }}
           />
-          <ReferenceLine x={100} stroke={AXIS_COLOR} />
+          <ReferenceLine x={100} stroke={theme.axis} />
           <Bar dataKey="percent" name="% of budget" barSize={18} radius={[0, 4, 4, 0]}>
             {chartData.map((row) => (
-              <Cell key={row.name} fill={row.percent > 100 ? OVER_BUDGET_COLOR : row.color} />
+              <Cell key={row.name} fill={row.percent > 100 ? theme.overBudget : row.color} />
             ))}
           </Bar>
         </BarChart>

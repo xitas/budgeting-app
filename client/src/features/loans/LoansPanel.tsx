@@ -11,7 +11,8 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { formatDisplayDate } from "../../lib/formatDate";
 import { extractErrorMessage } from "../../lib/errors";
 import { useAddRepayment, useCreateLoan, useDeleteLoan, useLoans, useRemoveRepayment, useUpdateLoan } from "./hooks";
-import type { Loan, UpdateLoanInput } from "shared";
+import { CATEGORICAL_PALETTE, type Loan, type UpdateLoanInput } from "shared";
+import { useSchemeColor } from "../../context/ThemeContext";
 
 const createLoanSchema = z.object({
   counterparty: z.string().min(1, "Counterparty is required"),
@@ -142,6 +143,7 @@ function AddRepaymentForm({ loanId, onSuccess }: { loanId: string; onSuccess: ()
 }
 
 export function LoansPanel() {
+  const schemeColor = useSchemeColor();
   const { data: loans, isLoading, isError } = useLoans();
   const updateLoan = useUpdateLoan();
   const deleteLoan = useDeleteLoan();
@@ -229,7 +231,7 @@ export function LoansPanel() {
         </button>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-lg border border-slate-200 bg-surface p-4 shadow-sm">
         {isLoading ? (
           <p className="text-sm text-slate-500">Loading...</p>
         ) : isError ? (
@@ -283,7 +285,7 @@ export function LoansPanel() {
                     </span>
                   </div>
 
-                  <ProgressBar value={loan.repaid} max={isEditing ? (draft.principal ?? loan.principal) : loan.principal} color={loan.direction === "lent" ? "#1baf7a" : "#eb6834"} />
+                  <ProgressBar value={loan.repaid} max={isEditing ? (draft.principal ?? loan.principal) : loan.principal} color={schemeColor(loan.direction === "lent" ? CATEGORICAL_PALETTE[2] : CATEGORICAL_PALETTE[1])} />
 
                   {isEditing ? (
                     <div className="mt-2 space-y-2">
@@ -318,7 +320,7 @@ export function LoansPanel() {
                           onClick={() => toggleExpanded(loan.id)}
                           aria-label={isExpanded ? "Hide repayment history" : "Show repayment history"}
                           title={isExpanded ? "Hide repayment history" : "Show repayment history"}
-                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link"
                         >
                           {isExpanded ? "▾" : "▸"}
                         </button>
@@ -327,7 +329,7 @@ export function LoansPanel() {
                           onClick={() => setRepaymentModalLoanId(loan.id)}
                           aria-label="Add repayment"
                           title="Add repayment"
-                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link"
                         >
                           <PlusIcon className="h-3.5 w-3.5" />
                         </button>
@@ -336,7 +338,7 @@ export function LoansPanel() {
                           onClick={() => startEdit(loan)}
                           aria-label="Edit loan"
                           title="Edit"
-                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link"
                         >
                           <PencilIcon className="h-3.5 w-3.5" />
                         </button>

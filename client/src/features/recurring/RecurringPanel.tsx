@@ -12,6 +12,7 @@ import { formatDisplayDate } from "../../lib/formatDate";
 import { extractErrorMessage } from "../../lib/errors";
 import { useCategories } from "../categories/hooks";
 import { useCreateRecurring, useDeleteRecurring, useRecurring, useRunRecurringNow, useUpdateRecurring } from "./hooks";
+import { useSchemeColor } from "../../context/ThemeContext";
 
 const createRecurringSchema = z.object({
   category: z.string().min(1, "Category is required"),
@@ -109,6 +110,7 @@ function AddRecurringForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function RecurringPanel() {
+  const schemeColor = useSchemeColor();
   const { data: recurring, isLoading, isError } = useRecurring();
   const updateRecurring = useUpdateRecurring();
   const deleteRecurring = useDeleteRecurring();
@@ -177,7 +179,7 @@ export function RecurringPanel() {
         </button>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-lg border border-slate-200 bg-surface p-4 shadow-sm">
         {isLoading ? (
           <p className="text-sm text-slate-500">Loading...</p>
         ) : isError ? (
@@ -197,7 +199,7 @@ export function RecurringPanel() {
                 >
                   <div className="mb-1 flex items-center justify-between text-sm">
                     <span className="flex items-center gap-1.5 font-medium text-slate-800">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: r.category.color }} />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: schemeColor(r.category.color) }} />
                       {r.category.name}
                       {!r.isActive && <span className="text-xs font-normal text-slate-400">(paused)</span>}
                     </span>
@@ -251,7 +253,7 @@ export function RecurringPanel() {
                           onClick={() => void handleRunNow(r.id)}
                           aria-label="Run now"
                           title="Run now"
-                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link"
                         >
                           <RefreshIcon className="h-3.5 w-3.5" />
                         </button>
@@ -260,7 +262,7 @@ export function RecurringPanel() {
                           onClick={() => startEdit(r)}
                           aria-label="Edit recurring transaction"
                           title="Edit"
-                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600"
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link"
                         >
                           <PencilIcon className="h-3.5 w-3.5" />
                         </button>
@@ -276,7 +278,7 @@ export function RecurringPanel() {
                       </span>
                     </div>
                   )}
-                  {runMessages[r.id] && <p className="mt-1 text-xs text-blue-600">{runMessages[r.id]}</p>}
+                  {runMessages[r.id] && <p className="mt-1 text-xs text-link">{runMessages[r.id]}</p>}
                   {rowErrors[r.id] && <p className="mt-1 text-xs text-red-600">{rowErrors[r.id]}</p>}
                 </li>
               );

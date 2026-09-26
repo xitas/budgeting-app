@@ -12,6 +12,7 @@ import { formatDisplayDate } from "../../lib/formatDate";
 import { useCategories } from "../categories/hooks";
 import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from "./hooks";
 import type { Transaction, TransactionFilters, UpdateTransactionInput } from "shared";
+import { useSchemeColor } from "../../context/ThemeContext";
 
 const transactionFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
@@ -90,6 +91,7 @@ function AddTransactionForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function TransactionsPanel() {
+  const schemeColor = useSchemeColor();
   const [filters, setFilters] = useState<TransactionFilters>({ page: 1, limit: PAGE_SIZE });
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -145,7 +147,7 @@ export function TransactionsPanel() {
     <div className="flex-1 lg:flex-[2]">
       <h1 className="mb-4 text-xl font-semibold text-slate-900">Transactions</h1>
 
-      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-surface p-4 shadow-sm">
         <label className="text-sm">
           <span className="mb-1 block text-slate-600">Type</span>
           <select
@@ -197,7 +199,7 @@ export function TransactionsPanel() {
         </label>
       </div>
 
-      <div className="mb-4 overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="mb-4 overflow-x-auto rounded-lg border border-slate-200 bg-surface shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 text-slate-500">
             <tr>
@@ -297,7 +299,7 @@ export function TransactionsPanel() {
                         <td className="px-4 py-2 text-slate-600">{formatDisplayDate(tx.date)}</td>
                         <td className="px-4 py-2">
                           <span className="inline-flex items-center gap-1.5">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: tx.category.color }} />
+                            <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: schemeColor(tx.category.color) }} />
                             {tx.category.name}
                           </span>
                         </td>
@@ -314,7 +316,7 @@ export function TransactionsPanel() {
                               disabled={tx.source === "loan"}
                               aria-label="Edit transaction"
                               title={tx.source === "loan" ? "Managed in the Loans tab" : "Edit"}
-                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
                             >
                               <PencilIcon className="h-4 w-4" />
                             </button>
