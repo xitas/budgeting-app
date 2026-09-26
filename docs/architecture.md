@@ -24,6 +24,28 @@
    invalidates all outstanding refresh tokens at once (e.g. "log out
    everywhere").
 
+## Password reset (6-digit emailed code)
+
+A code the user types in, rather than a reset link, so the same flow works
+unchanged in the web app and the planned Expo mobile app — a link would need
+deep-link / universal-link setup to land inside the mobile app.
+
+1. `POST /api/auth/forgot-password` — if the email belongs to a user, stores a
+   SHA-256 hash of a random 6-digit code (never the code itself) with a
+   15-minute expiry and emails the code. The response is identical whether or
+   not the account exists, so the endpoint can't be used to probe for
+   registered emails. A request within 60s of the last code is silently
+   ignored (resend throttle).
+2. `POST /api/auth/reset-password` — checks the code in constant time. Each
+   wrong guess increments `resetCodeAttempts`; the 5th burns the code. With
+   only 10^6 possible codes, this attempt cap (not the hash) is what makes
+   guessing impractical. On success it sets the new password, clears the code,
+   and bumps `refreshTokenVersion` — logging out every existing session.
+
+Mail goes through `utils/mailer.ts` (nodemailer over SMTP). Locally, SMTP
+points at Mailpit from `docker-compose.yml` (inbox at http://localhost:8025);
+with `SMTP_HOST` unset, messages are logged to the console instead.
+
 ## Data model decisions
 
 - **Reference, don't embed, for `Transaction`**: transactions reference

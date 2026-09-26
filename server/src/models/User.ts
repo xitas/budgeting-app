@@ -8,6 +8,9 @@ export interface IUser {
   passwordHash: string;
   name: string;
   refreshTokenVersion: number;
+  resetCodeHash?: string;
+  resetCodeExpiresAt?: Date;
+  resetCodeAttempts: number;
 }
 
 export interface IUserMethods {
@@ -44,6 +47,21 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       type: Number,
       default: 0,
     },
+    // Password reset: only a SHA-256 hash of the 6-digit code is stored, and
+    // all three fields are cleared once the code is used or burned.
+    resetCodeHash: {
+      type: String,
+      select: false,
+    },
+    resetCodeExpiresAt: {
+      type: Date,
+      select: false,
+    },
+    resetCodeAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
   },
   { timestamps: true }
 );
@@ -72,7 +90,7 @@ userSchema.method("comparePassword", function comparePassword(this: UserDocument
 userSchema.set("toJSON", {
   virtuals: true,
   transform: (_doc, ret) => {
-    const { passwordHash, __v, _id, ...rest } = ret;
+    const { passwordHash, resetCodeHash, resetCodeExpiresAt, resetCodeAttempts, __v, _id, ...rest } = ret;
     return rest;
   },
 });

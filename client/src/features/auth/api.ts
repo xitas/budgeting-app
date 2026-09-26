@@ -11,6 +11,14 @@ export async function login(email: string, password: string): Promise<AuthRespon
   return res.data;
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  await apiClient.post("/auth/forgot-password", { email });
+}
+
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+  await apiClient.post("/auth/reset-password", { email, code, newPassword });
+}
+
 export async function logout(): Promise<void> {
   await apiClient.post("/auth/logout");
 }

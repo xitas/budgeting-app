@@ -73,7 +73,7 @@ budget-app/
 ├── server/     # Express + TS backend API
 ├── shared/     # TS types shared between client and server
 ├── docs/       # architecture notes + screenshots
-└── docker-compose.yml   # local MongoDB for development
+└── docker-compose.yml   # local MongoDB + Mailpit (email catcher) for development
 ```
 
 ## Getting started
@@ -88,7 +88,7 @@ npm install
 cp server/.env.example server/.env
 cp client/.env.example client/.env
 
-# 3. Start local MongoDB
+# 3. Start local MongoDB (and Mailpit, which catches outgoing email)
 npm run mongo:up
 
 # 4. Start the app (shared types watcher + API + client, all together)
@@ -97,6 +97,7 @@ npm run dev
 
 - Client: http://localhost:5173
 - API: http://localhost:4000/api (health check at `/api/health`)
+- Mailpit inbox (password reset codes land here): http://localhost:8025
 - Mongo Express GUI (optional, to browse the database visually):
   `docker compose --profile tools up -d` → http://localhost:8081
 
@@ -133,8 +134,12 @@ data) and the client suite. Requires `npm run mongo:up` first.
 - [x] M6 — Charts & dashboard
 - [x] M7 — Polish, tests, seed data
 - [x] M8 — Loans (money lent to / borrowed from someone — party, principal, running balance, repayments)
+- [x] M9 — Password reset (emailed 6-digit code; works the same on web and mobile, no deep links needed)
+- [ ] M10 — Mobile-ready API (refresh token via request body as well as cookie; move Zod schemas + API types into `shared/`)
+- [ ] M11 — Mobile app scaffold (Expo / React Native in `mobile/`, auth screens, secure token storage)
+- [ ] M12 — Mobile feature screens (transactions, budgets, loans, dashboard charts)
 
-**Future work**: password reset, CSV import/export, dark mode, CI (GitHub Actions), live deployment.
+**Future work**: CSV import/export, dark mode, CI (GitHub Actions), live deployment (needed before the mobile app is usable off the local network).
 
 ## License
 

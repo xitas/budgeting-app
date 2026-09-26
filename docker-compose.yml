@@ -66,6 +66,15 @@ services:
       timeout: 5s
       retries: 5
 
+  # Local SMTP catcher for password-reset emails: the API sends to
+  # localhost:1025 and nothing leaves the machine. Inbox UI: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+
   mongo-express:
     image: mongo-express:1
     restart: unless-stopped
