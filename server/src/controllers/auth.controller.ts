@@ -4,31 +4,50 @@ import { AppError } from "../utils/AppError";
 import {
   ForgotPasswordInput,
   LoginInput,
+  RefreshInput,
   ResetPasswordInput,
   SignupInput,
 } from "../validation/auth.validation";
 
 const REFRESH_COOKIE_NAME = "refreshToken";
 
+// Native mobile apps have no cookie jar worth relying on, so they opt in with
+// this header to receive the refresh token in the JSON body instead (and keep
+// it in the device's secure storage). Browsers never send it, so the web app
+// keeps the refresh token in an httpOnly cookie that JS can't read.
+function isMobileClient(req: Request): boolean {
+  return req.get("X-Client-Type") === "mobile";
+}
+
+function sendAuthResult(
+  req: Request,
+  res: Response,
+  status: number,
+  { user, accessToken, refreshToken }: Awaited<ReturnType<typeof authService.login>>
+): void {
+  if (isMobileClient(req)) {
+    res.status(status).json({ user, accessToken, refreshToken });
+    return;
+  }
+  authService.setRefreshCookie(res, refreshToken);
+  res.status(status).json({ user, accessToken });
+}
+
 export async function signupHandler(req: Request, res: Response): Promise<void> {
   const { email, password, name } = req.body as SignupInput;
-  const { user, accessToken, refreshToken } = await authService.signup(email, password, name);
-  authService.setRefreshCookie(res, refreshToken);
-  res.status(201).json({ user, accessToken });
+  sendAuthResult(req, res, 201, await authService.signup(email, password, name));
 }
 
 export async function loginHandler(req: Request, res: Response): Promise<void> {
   const { email, password } = req.body as LoginInput;
-  const { user, accessToken, refreshToken } = await authService.login(email, password);
-  authService.setRefreshCookie(res, refreshToken);
-  res.status(200).json({ user, accessToken });
+  sendAuthResult(req, res, 200, await authService.login(email, password));
 }
 
 export async function refreshHandler(req: Request, res: Response): Promise<void> {
-  const token = req.cookies?.[REFRESH_COOKIE_NAME] as string | undefined;
-  const { user, accessToken, refreshToken } = await authService.refresh(token);
-  authService.setRefreshCookie(res, refreshToken);
-  res.status(200).json({ user, accessToken });
+  const token = isMobileClient(req)
+    ? (req.body as RefreshInput).refreshToken
+    : (req.cookies?.[REFRESH_COOKIE_NAME] as string | undefined);
+  sendAuthResult(req, res, 200, await authService.refresh(token));
 }
 
 export async function logoutHandler(req: Request, res: Response): Promise<void> {

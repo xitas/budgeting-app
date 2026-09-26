@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { AddRepaymentInput, CreateLoanInput, Loan, UpdateLoanInput } from "./types";
+import type { AddRepaymentInput, CreateLoanInput, Loan, UpdateLoanInput } from "shared";
 
 export async function listLoans(): Promise<Loan[]> {
   const res = await apiClient.get<{ loans: Loan[] }>("/loans");

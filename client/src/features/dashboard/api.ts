@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { BudgetVsActual, CategorySpending, DashboardSummary, MonthlyTrendPoint } from "./types";
+import type { BudgetVsActual, CategorySpending, DashboardSummary, MonthlyTrendPoint } from "shared";
 
 export async function getSummary(month: number, year: number): Promise<DashboardSummary> {
   const res = await apiClient.get<DashboardSummary>("/dashboard/summary", { params: { month, year } });

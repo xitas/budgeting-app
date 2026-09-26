@@ -71,7 +71,7 @@ a real MongoDB multi-document transaction. See
 budget-app/
 ├── client/     # React + Vite + TS frontend
 ├── server/     # Express + TS backend API
-├── shared/     # TS types shared between client and server
+├── shared/     # TS types shared by client, server (and mobile): enums + API request/response shapes
 ├── docs/       # architecture notes + screenshots
 └── docker-compose.yml   # local MongoDB + Mailpit (email catcher) for development
 ```
@@ -135,7 +135,7 @@ data) and the client suite. Requires `npm run mongo:up` first.
 - [x] M7 — Polish, tests, seed data
 - [x] M8 — Loans (money lent to / borrowed from someone — party, principal, running balance, repayments)
 - [x] M9 — Password reset (emailed 6-digit code; works the same on web and mobile, no deep links needed)
-- [ ] M10 — Mobile-ready API (refresh token via request body as well as cookie; move Zod schemas + API types into `shared/`)
+- [x] M10 — Mobile-ready API (refresh token in the JSON body for mobile clients, cookie for web; API types moved into `shared/`)
 - [ ] M11 — Mobile app scaffold (Expo / React Native in `mobile/`, auth screens, secure token storage)
 - [ ] M12 — Mobile feature screens (transactions, budgets, loans, dashboard charts)
 

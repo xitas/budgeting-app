@@ -5,7 +5,7 @@ import type {
   Transaction,
   TransactionFilters,
   UpdateTransactionInput,
-} from "./types";
+} from "shared";
 
 export async function listTransactions(filters: TransactionFilters): Promise<PaginatedTransactions> {
   const res = await apiClient.get<PaginatedTransactions>("/transactions", { params: filters });

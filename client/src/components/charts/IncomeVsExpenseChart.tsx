@@ -1,6 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CATEGORICAL_PALETTE } from "shared";
-import type { MonthlyTrendPoint } from "../../features/dashboard/types";
+import { CATEGORICAL_PALETTE, type MonthlyTrendPoint } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
 

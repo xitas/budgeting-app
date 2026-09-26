@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "./api";
-import type { TransactionFilters, UpdateTransactionInput } from "./types";
+import type { TransactionFilters, UpdateTransactionInput } from "shared";
 
 const TRANSACTIONS_KEY = "transactions";
 

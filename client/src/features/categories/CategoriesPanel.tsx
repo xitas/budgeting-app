@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CATEGORICAL_PALETTE } from "shared";
+import { CATEGORICAL_PALETTE, type Category } from "shared";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,7 +10,6 @@ import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { extractErrorMessage } from "../../lib/errors";
 import { useCategories, useCreateCategory, useDeleteCategory, useUpdateCategory } from "./hooks";
-import type { Category } from "./types";
 
 const createCategorySchema = z.object({
   name: z.string().min(1, "Name is required"),

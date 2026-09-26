@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "./api";
-import type { UpdateCategoryInput } from "./types";
+import type { UpdateCategoryInput } from "shared";
 
 const CATEGORIES_KEY = ["categories"];
 

@@ -11,7 +11,7 @@ import { extractErrorMessage } from "../../lib/errors";
 import { formatDisplayDate } from "../../lib/formatDate";
 import { useCategories } from "../categories/hooks";
 import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from "./hooks";
-import type { Transaction, TransactionFilters, UpdateTransactionInput } from "./types";
+import type { Transaction, TransactionFilters, UpdateTransactionInput } from "shared";
 
 const transactionFormSchema = z.object({
   category: z.string().min(1, "Category is required"),

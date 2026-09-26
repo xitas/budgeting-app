@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "./api";
-import type { CreateRecurringInput, UpdateRecurringInput } from "./types";
+import type { CreateRecurringInput, UpdateRecurringInput } from "shared";
 
 const RECURRING_KEY = "recurring";
 

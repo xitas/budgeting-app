@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "./api";
-import type { AddRepaymentInput, CreateLoanInput, UpdateLoanInput } from "./types";
+import type { AddRepaymentInput, CreateLoanInput, UpdateLoanInput } from "shared";
 
 const LOANS_KEY = "loans";
 

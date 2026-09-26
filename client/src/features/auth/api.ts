@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { AuthResponse, User } from "./types";
+import type { AuthResponse, User } from "shared";
 
 export async function signup(email: string, password: string, name: string): Promise<AuthResponse> {
   const res = await apiClient.post<AuthResponse>("/auth/signup", { email, password, name });

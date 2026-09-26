@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { Budget, CreateBudgetInput, UpdateBudgetInput } from "./types";
+import type { Budget, CreateBudgetInput, UpdateBudgetInput } from "shared";
 
 export async function listBudgets(month: number, year: number): Promise<Budget[]> {
   const res = await apiClient.get<{ budgets: Budget[] }>("/budgets", { params: { month, year } });

@@ -23,6 +23,13 @@
 4. **Logout** — clears the refresh cookie; bumping `refreshTokenVersion`
    invalidates all outstanding refresh tokens at once (e.g. "log out
    everywhere").
+5. **Mobile clients** — a native app has no dependable cookie jar, so it sends
+   `X-Client-Type: mobile` on signup/login/refresh. The server then returns
+   the refresh token in the JSON body (and sets no cookie); the app keeps it in
+   the device's secure storage (Keychain / Keystore) and sends it back as
+   `{ refreshToken }` to `/refresh`. Browsers never send that header, so the
+   web app's refresh token stays in the httpOnly cookie, out of reach of JS.
+   Same rotation and `refreshTokenVersion` rules apply to both.
 
 ## Password reset (6-digit emailed code)
 

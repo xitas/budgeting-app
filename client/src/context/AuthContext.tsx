@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import * as authApi from "../features/auth/api";
-import type { User } from "../features/auth/types";
+import type { User } from "shared";
 import { setAccessToken } from "../lib/authToken";
 
 interface AuthContextValue {

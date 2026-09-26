@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { CreateRecurringInput, RecurringTransaction, UpdateRecurringInput } from "./types";
+import type { CreateRecurringInput, RecurringTransaction, UpdateRecurringInput } from "shared";
 
 export async function listRecurring(): Promise<RecurringTransaction[]> {
   const res = await apiClient.get<{ recurring: RecurringTransaction[] }>("/recurring");

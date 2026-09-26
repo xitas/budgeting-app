@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as api from "./api";
-import type { CreateBudgetInput, UpdateBudgetInput } from "./types";
+import type { CreateBudgetInput, UpdateBudgetInput } from "shared";
 
 const BUDGETS_KEY = "budgets";
 

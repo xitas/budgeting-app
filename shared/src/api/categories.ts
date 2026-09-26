@@ -1,4 +1,4 @@
-import type { TransactionType } from "shared";
+import type { TransactionType } from "../index";
 
 export interface Category {
   id: string;

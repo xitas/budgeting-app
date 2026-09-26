@@ -27,3 +27,12 @@ export const CATEGORICAL_PALETTE = [
   "#4a3aa7", // violet
   "#e34948", // red
 ] as const;
+
+// API request/response shapes, shared by the web client and the mobile app.
+export * from "./api/auth";
+export * from "./api/budgets";
+export * from "./api/categories";
+export * from "./api/dashboard";
+export * from "./api/loans";
+export * from "./api/recurring";
+export * from "./api/transactions";

@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { RecurringFrequency } from "shared";
+import type { RecurringFrequency, RecurringTransaction, UpdateRecurringInput } from "shared";
 import { z } from "zod";
 import { Field } from "../../components/ui/Field";
 import { buttonClass, inputClass } from "../../components/ui/formStyles";
@@ -12,7 +12,6 @@ import { formatDisplayDate } from "../../lib/formatDate";
 import { extractErrorMessage } from "../../lib/errors";
 import { useCategories } from "../categories/hooks";
 import { useCreateRecurring, useDeleteRecurring, useRecurring, useRunRecurringNow, useUpdateRecurring } from "./hooks";
-import type { RecurringTransaction, UpdateRecurringInput } from "./types";
 
 const createRecurringSchema = z.object({
   category: z.string().min(1, "Category is required"),

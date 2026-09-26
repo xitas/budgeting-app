@@ -1,5 +1,5 @@
 import { apiClient } from "../../lib/apiClient";
-import type { Category, CreateCategoryInput, UpdateCategoryInput } from "./types";
+import type { Category, CreateCategoryInput, UpdateCategoryInput } from "shared";
 
 export async function listCategories(): Promise<Category[]> {
   const res = await apiClient.get<{ categories: Category[] }>("/categories");

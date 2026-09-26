@@ -11,7 +11,7 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { formatDisplayDate } from "../../lib/formatDate";
 import { extractErrorMessage } from "../../lib/errors";
 import { useAddRepayment, useCreateLoan, useDeleteLoan, useLoans, useRemoveRepayment, useUpdateLoan } from "./hooks";
-import type { Loan, UpdateLoanInput } from "./types";
+import type { Loan, UpdateLoanInput } from "shared";
 
 const createLoanSchema = z.object({
   counterparty: z.string().min(1, "Counterparty is required"),

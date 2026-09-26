@@ -1,4 +1,4 @@
-import type { RecurringFrequency, TransactionType } from "shared";
+import type { RecurringFrequency, TransactionType } from "../index";
 
 export interface RecurringCategoryRef {
   id: string;

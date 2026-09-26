@@ -76,4 +76,48 @@ describe("auth flow", () => {
     const refreshAfterLogout = await request(app).post("/api/auth/refresh").set("Cookie", rotatedCookie);
     expect(refreshAfterLogout.status).toBe(401);
   });
+
+  it("never exposes the refresh token in the body to web clients", async () => {
+    const res = await request(app).post("/api/auth/signup").send(credentials);
+    expect(res.body.refreshToken).toBeUndefined();
+    expect(res.headers["set-cookie"]).toBeDefined();
+  });
+});
+
+describe("mobile auth flow (X-Client-Type: mobile)", () => {
+  it("returns the refresh token in the body instead of a cookie", async () => {
+    const res = await request(app).post("/api/auth/signup").set("X-Client-Type", "mobile").send(credentials);
+
+    expect(res.status).toBe(201);
+    expect(typeof res.body.refreshToken).toBe("string");
+    expect(res.headers["set-cookie"]).toBeUndefined();
+  });
+
+  it("refreshes with a body token, and logout invalidates it", async () => {
+    await request(app).post("/api/auth/signup").send(credentials);
+    const loginRes = await request(app)
+      .post("/api/auth/login")
+      .set("X-Client-Type", "mobile")
+      .send({ email: credentials.email, password: credentials.password });
+
+    const refreshRes = await request(app)
+      .post("/api/auth/refresh")
+      .set("X-Client-Type", "mobile")
+      .send({ refreshToken: loginRes.body.refreshToken });
+    expect(refreshRes.status).toBe(200);
+    expect(typeof refreshRes.body.refreshToken).toBe("string");
+
+    await request(app).post("/api/auth/logout").set("Authorization", `Bearer ${refreshRes.body.accessToken}`);
+
+    const refreshAfterLogout = await request(app)
+      .post("/api/auth/refresh")
+      .set("X-Client-Type", "mobile")
+      .send({ refreshToken: refreshRes.body.refreshToken });
+    expect(refreshAfterLogout.status).toBe(401);
+  });
+
+  it("rejects a mobile refresh with no token", async () => {
+    const res = await request(app).post("/api/auth/refresh").set("X-Client-Type", "mobile").send({});
+    expect(res.status).toBe(401);
+  });
 });

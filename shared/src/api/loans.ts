@@ -1,4 +1,4 @@
-import type { LoanDirection, LoanStatus } from "shared";
+import type { LoanDirection, LoanStatus } from "../index";
 
 export interface Repayment {
   id: string;

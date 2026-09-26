@@ -11,7 +11,7 @@ import { ProgressBar } from "../../components/ui/ProgressBar";
 import { extractErrorMessage } from "../../lib/errors";
 import { useCategories } from "../categories/hooks";
 import { useBudgets, useCreateBudget, useDeleteBudget, useUpdateBudget } from "./hooks";
-import type { Budget } from "./types";
+import type { Budget } from "shared";
 
 const MONTH_NAMES = [
   "January",
