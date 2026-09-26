@@ -1,0 +1,65 @@
+import { useState } from "react";
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BudgetVsActualChart } from "../../../components/charts/BudgetVsActualChart";
+import { IncomeVsExpenseChart } from "../../../components/charts/IncomeVsExpenseChart";
+import { SpendingByCategoryChart } from "../../../components/charts/SpendingByCategoryChart";
+import { StatTile } from "../../../components/charts/StatTile";
+import { MonthSwitcher } from "../../../components/ui/MonthSwitcher";
+import { Notice } from "../../../components/ui/Notice";
+import { colors } from "../../../components/ui/theme";
+import { useAuth } from "../../../context/AuthContext";
+import {
+  useBudgetVsActual,
+  useDashboardSummary,
+  useIncomeVsExpense,
+  useSpendingByCategory,
+} from "../../../features/dashboard/hooks";
+
+export default function DashboardScreen() {
+  const { user } = useAuth();
+  const now = new Date();
+  const [period, setPeriod] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
+  const { month, year } = period;
+
+  const summary = useDashboardSummary(month, year);
+  const spending = useSpendingByCategory(month, year);
+  const trend = useIncomeVsExpense(month, year, 6);
+  const budgets = useBudgetVsActual(month, year);
+  const queries = [summary, spending, trend, budgets];
+  const hasError = queries.some((q) => q.isError);
+  const isRefreshing = queries.some((q) => q.isRefetching);
+
+  const s = summary.data;
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={() => queries.forEach((q) => void q.refetch())} />
+      }
+    >
+      <Text style={styles.greeting}>Hi, {user?.name}</Text>
+      <MonthSwitcher month={month} year={year} onChange={setPeriod} />
+
+      {hasError ? <Notice tone="error">Some dashboard data couldn&apos;t load. Pull down to retry.</Notice> : null}
+
+      {/* Same tones as the web dashboard. */}
+      <View style={styles.tiles}>
+        <StatTile label="Income" value={(s?.income ?? 0).toFixed(2)} tone="positive" />
+        <StatTile label="Expense" value={(s?.expense ?? 0).toFixed(2)} tone="negative" />
+        <StatTile label="Net lending" value={(s?.netLending ?? 0).toFixed(2)} tone={s && s.netLending < 0 ? "negative" : "neutral"} />
+        <StatTile label="Net" value={(s?.net ?? 0).toFixed(2)} tone={s && s.net < 0 ? "negative" : "neutral"} />
+      </View>
+
+      <SpendingByCategoryChart data={spending.data ?? []} />
+      <BudgetVsActualChart data={budgets.data ?? []} />
+      <IncomeVsExpenseChart data={trend.data ?? []} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { padding: 16, gap: 16, paddingBottom: 32 },
+  greeting: { fontSize: 20, fontWeight: "600", color: colors.text },
+  tiles: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+});

@@ -53,6 +53,27 @@ Mail goes through `utils/mailer.ts` (nodemailer over SMTP). Locally, SMTP
 points at Mailpit from `docker-compose.yml` (inbox at http://localhost:8025);
 with `SMTP_HOST` unset, messages are logged to the console instead.
 
+## Mobile app (Expo)
+
+`mobile/` reuses the web client's API modules unchanged (same
+`features/*/api.ts`, same types from `shared/`), with its own screens and
+data hooks. Differences from the web client worth knowing:
+
+- **No single-item endpoints are needed.** The web app edits rows in place;
+  mobile opens edit screens, which read the item from the already-loaded list
+  query (e.g. `useLoans()` then `find(id)`, or `findCachedTransaction` over the
+  infinite transactions pages).
+- **Wider cache invalidation.** Tab screens stay mounted instead of refetching
+  on navigation, so every mutation that creates/changes/deletes a real
+  `Transaction` (transactions, loans, repayments, run-now) invalidates the
+  transactions list, dashboard and budgets together (`lib/queryKeys.ts`).
+- **Transactions scroll instead of paging** (`useInfiniteQuery` over the same
+  paginated endpoint).
+- **Charts are plain React Native views** (bars and meters), not a chart
+  library — no native dependency, so they run in Expo Go. They keep the web
+  charts' palette slots and each ships a "View as table" twin; tapping a
+  month in the trend chart plays the role the hover tooltip has on web.
+
 ## Data model decisions
 
 - **Reference, don't embed, for `Transaction`**: transactions reference

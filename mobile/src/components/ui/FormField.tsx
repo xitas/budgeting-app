@@ -20,7 +20,8 @@ export function FormField<T extends FieldValues>({ control, name, label, error, 
         name={name}
         render={({ field: { value, onChange, onBlur } }) => (
           <TextInput
-            value={(value as string | undefined) ?? ""}
+            // Edit forms seed numbers (amounts); a TextInput only takes strings.
+            value={value === undefined || value === null ? "" : String(value)}
             onChangeText={onChange}
             onBlur={onBlur}
             accessibilityLabel={label}

@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^3.9.1",
+    "@react-native-community/datetimepicker": "9.1.0",
     "@tanstack/react-query": "^5.62.0",
     "axios": "^1.7.9",
     "expo": "~57.0.25",
@@ -22,13 +24,15 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.11"
   },
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
   },
   "private": true
 }

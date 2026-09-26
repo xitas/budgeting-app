@@ -47,7 +47,7 @@ be repaid.
 - **Server**: Node.js, Express, TypeScript, Mongoose, JWT auth (access + refresh tokens), Zod validation, node-cron
 - **Database**: MongoDB (local via Docker, single-node replica set to support multi-document transactions)
 - **Testing**: Vitest + Supertest (server integration tests against a real MongoDB), Vitest (client unit tests)
-- **Mobile**: Expo SDK 57 (React Native), Expo Router, expo-secure-store, TanStack Query, React Hook Form + Zod
+- **Mobile**: Expo SDK 57 (React Native), Expo Router, expo-secure-store, TanStack Query, React Hook Form + Zod, native date picker; charts drawn with plain RN views (no chart library, runs in Expo Go)
 - **Monorepo**: npm workspaces (`client/`, `server/`, `shared/`, `mobile/`)
 
 ## Why MongoDB?
@@ -160,7 +160,7 @@ data) and the client suite. Requires `npm run mongo:up` first.
 - [x] M9 — Password reset (emailed 6-digit code; works the same on web and mobile, no deep links needed)
 - [x] M10 — Mobile-ready API (refresh token in the JSON body for mobile clients, cookie for web; API types moved into `shared/`)
 - [x] M11 — Mobile app scaffold (Expo / React Native in `mobile/`, auth screens, secure token storage)
-- [ ] M12 — Mobile feature screens (transactions, budgets, loans, dashboard charts)
+- [x] M12 — Mobile feature screens (tab bar; transactions, loans, budgets, categories, recurring; dashboard charts)
 
 **Future work**: CSV import/export, dark mode, CI (GitHub Actions), live deployment (needed before the mobile app is usable off the local network).
 
