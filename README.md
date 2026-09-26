@@ -47,7 +47,8 @@ be repaid.
 - **Server**: Node.js, Express, TypeScript, Mongoose, JWT auth (access + refresh tokens), Zod validation, node-cron
 - **Database**: MongoDB (local via Docker, single-node replica set to support multi-document transactions)
 - **Testing**: Vitest + Supertest (server integration tests against a real MongoDB), Vitest (client unit tests)
-- **Monorepo**: npm workspaces (`client/`, `server/`, `shared/`)
+- **Mobile**: Expo SDK 57 (React Native), Expo Router, expo-secure-store, TanStack Query, React Hook Form + Zod
+- **Monorepo**: npm workspaces (`client/`, `server/`, `shared/`, `mobile/`)
 
 ## Why MongoDB?
 
@@ -71,6 +72,7 @@ a real MongoDB multi-document transaction. See
 budget-app/
 ├── client/     # React + Vite + TS frontend
 ├── server/     # Express + TS backend API
+├── mobile/     # Expo (React Native) app — iOS/Android
 ├── shared/     # TS types shared by client, server (and mobile): enums + API request/response shapes
 ├── docs/       # architecture notes + screenshots
 └── docker-compose.yml   # local MongoDB + Mailpit (email catcher) for development
@@ -100,6 +102,27 @@ npm run dev
 - Mailpit inbox (password reset codes land here): http://localhost:8025
 - Mongo Express GUI (optional, to browse the database visually):
   `docker compose --profile tools up -d` → http://localhost:8081
+
+### Mobile app (Expo)
+
+1. Install **Expo Go** on your phone (App Store / Play Store). The phone and
+   your computer must be on the same Wi-Fi network.
+2. With the API running (`npm run dev`), start the Expo dev server in a second
+   terminal:
+
+   ```bash
+   npm run dev:mobile
+   ```
+
+3. Scan the QR code it prints (iOS: Camera app; Android: from Expo Go).
+
+The app finds the API automatically: it uses the same LAN address Expo serves
+the bundle from, on port 4000. To point it somewhere else (e.g. a deployed
+API), set `EXPO_PUBLIC_API_URL=https://your-api/api` in `mobile/.env`.
+
+On Windows, allow Node.js through the firewall on **private networks** the
+first time, or the phone can't reach port 4000 (login shows "Can't reach the
+server").
 
 ### Demo data
 
@@ -136,7 +159,7 @@ data) and the client suite. Requires `npm run mongo:up` first.
 - [x] M8 — Loans (money lent to / borrowed from someone — party, principal, running balance, repayments)
 - [x] M9 — Password reset (emailed 6-digit code; works the same on web and mobile, no deep links needed)
 - [x] M10 — Mobile-ready API (refresh token in the JSON body for mobile clients, cookie for web; API types moved into `shared/`)
-- [ ] M11 — Mobile app scaffold (Expo / React Native in `mobile/`, auth screens, secure token storage)
+- [x] M11 — Mobile app scaffold (Expo / React Native in `mobile/`, auth screens, secure token storage)
 - [ ] M12 — Mobile feature screens (transactions, budgets, loans, dashboard charts)
 
 **Future work**: CSV import/export, dark mode, CI (GitHub Actions), live deployment (needed before the mobile app is usable off the local network).

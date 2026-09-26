@@ -5,7 +5,8 @@
   "workspaces": [
     "client",
     "server",
-    "shared"
+    "shared",
+    "mobile"
   ],
   "scripts": {
     "postinstall": "npm run build --workspace=shared",
@@ -14,12 +15,17 @@
     "dev:server": "npm run dev --workspace=server",
     "dev:client": "npm run dev --workspace=client",
     "build": "npm run build --workspace=shared && npm run build --workspace=server && npm run build --workspace=client",
-    "lint": "npm run lint --workspace=server && npm run lint --workspace=client",
+    "lint": "npm run lint --workspace=server && npm run lint --workspace=client && npm run lint --workspace=mobile",
     "test": "npm run test --workspace=server && npm run test --workspace=client",
     "mongo:up": "docker compose up -d --wait",
-    "mongo:down": "docker compose down"
+    "mongo:down": "docker compose down",
+    "dev:mobile": "npm run start --workspace=mobile"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   }
 }
