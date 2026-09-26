@@ -8,7 +8,9 @@ import { PencilIcon, PlusIcon, TrashIcon } from "../../components/ui/icons";
 import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { extractErrorMessage } from "../../lib/errors";
+import { downloadBlob } from "../../lib/download";
 import { formatDisplayDate } from "../../lib/formatDate";
+import { exportTransactionsCsv } from "./api";
 import { useCategories } from "../categories/hooks";
 import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from "./hooks";
 import type { Transaction, TransactionFilters, UpdateTransactionInput } from "shared";
@@ -98,6 +100,8 @@ export function TransactionsPanel() {
   const [draft, setDraft] = useState<UpdateTransactionInput>({});
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const { data: categories } = useCategories();
   const { data, isLoading, isError } = useTransactions(filters);
@@ -131,6 +135,19 @@ export function TransactionsPanel() {
       setDraft({});
     } catch (err) {
       setEditError(extractErrorMessage(err));
+    }
+  }
+
+  async function handleExport(): Promise<void> {
+    setIsExporting(true);
+    setExportError(null);
+    try {
+      const blob = await exportTransactionsCsv(filters);
+      downloadBlob(blob, `transactions-${todayIso()}.csv`);
+    } catch (err) {
+      setExportError(extractErrorMessage(err));
+    } finally {
+      setIsExporting(false);
     }
   }
 
@@ -197,6 +214,18 @@ export function TransactionsPanel() {
             onChange={(e) => setFilters((prev) => ({ ...prev, page: 1, to: e.target.value || undefined }))}
           />
         </label>
+        <div className="ml-auto flex flex-col items-end">
+          <button
+            type="button"
+            onClick={() => void handleExport()}
+            disabled={isExporting}
+            title="Download the transactions matching these filters as a CSV file"
+            className={ghostButtonClass}
+          >
+            {isExporting ? "Exporting..." : "Export CSV"}
+          </button>
+          {exportError && <span className="mt-1 text-xs text-red-600">{exportError}</span>}
+        </div>
       </div>
 
       <div className="mb-4 overflow-x-auto rounded-lg border border-slate-200 bg-surface shadow-sm">

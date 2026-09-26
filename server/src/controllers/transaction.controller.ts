@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import * as transactionService from "../services/transaction.service";
 import {
   CreateTransactionInput,
+  ExportTransactionsQuery,
   ListTransactionsQuery,
   UpdateTransactionInput,
 } from "../validation/transaction.validation";
@@ -9,6 +10,16 @@ import {
 export async function listTransactionsHandler(req: Request, res: Response): Promise<void> {
   const result = await transactionService.listTransactions(req.userId!, req.query as ListTransactionsQuery);
   res.status(200).json(result);
+}
+
+export async function exportTransactionsHandler(req: Request, res: Response): Promise<void> {
+  const csv = await transactionService.exportTransactionsCsv(req.userId!, req.query as ExportTransactionsQuery);
+  const today = new Date().toISOString().slice(0, 10);
+  res
+    .status(200)
+    .type("text/csv; charset=utf-8")
+    .attachment(`transactions-${today}.csv`)
+    .send(csv);
 }
 
 export async function createTransactionHandler(req: Request, res: Response): Promise<void> {

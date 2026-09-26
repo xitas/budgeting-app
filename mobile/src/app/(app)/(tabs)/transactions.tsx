@@ -1,14 +1,17 @@
-import { router } from "expo-router";
-import { useState } from "react";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { router, useNavigation } from "expo-router";
+import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Transaction, TransactionType } from "shared";
 import { CenteredMessage, Fab } from "../../../components/ui/layout";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
 import { type Colors } from "../../../components/ui/theme";
 import { useCategories } from "../../../features/categories/hooks";
+import { exportTransactionsCsv } from "../../../features/transactions/api";
 import { useInfiniteTransactions } from "../../../features/transactions/hooks";
-import { formatDisplayDate } from "../../../lib/dates";
+import { formatDisplayDate, todayIso } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { shareCsv } from "../../../lib/shareFile";
 import { useColors, useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
 
 type TypeFilter = "all" | TransactionType;
@@ -27,9 +30,44 @@ export default function TransactionsScreen() {
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const { data: categories } = useCategories();
 
-  const query = useInfiniteTransactions({
+  const filters = {
     type: typeFilter === "all" ? undefined : typeFilter,
     category: categoryFilter || undefined,
+  };
+  const query = useInfiniteTransactions(filters);
+  const navigation = useNavigation();
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Exports exactly what the current filters show.
+  async function handleExport(): Promise<void> {
+    setIsExporting(true);
+    try {
+      const csv = await exportTransactionsCsv(filters);
+      await shareCsv(`transactions-${todayIso()}.csv`, csv, "Export transactions");
+    } catch (err) {
+      Alert.alert("Export failed", extractErrorMessage(err));
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () =>
+        isExporting ? (
+          <ActivityIndicator style={styles.headerButton} color={colors.link} />
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Export as CSV"
+            hitSlop={12}
+            onPress={() => void handleExport()}
+            style={styles.headerButton}
+          >
+            <Ionicons name="share-outline" size={22} color={colors.link} />
+          </Pressable>
+        ),
+    });
   });
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
   const filterCategories = (categories ?? []).filter((c) => typeFilter === "all" || c.type === typeFilter);
@@ -170,4 +208,5 @@ const makeStyles = (colors: Colors) =>
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
     footer: { padding: 16 },
     fabSpace: { height: 88 },
+    headerButton: { marginRight: 16 },
   });

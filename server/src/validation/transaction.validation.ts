@@ -11,6 +11,16 @@ export const listTransactionsSchema = z.object({
   }),
 });
 
+// Same filters as the list, minus paging: an export is the whole result.
+export const exportTransactionsSchema = z.object({
+  query: z.object({
+    from: z.string().optional(),
+    to: z.string().optional(),
+    category: z.string().optional(),
+    type: z.enum(["income", "expense"]).optional(),
+  }),
+});
+
 export const createTransactionSchema = z.object({
   body: z.object({
     category: z.string().min(1, "Category is required"),
@@ -37,5 +47,6 @@ export const transactionIdParamsSchema = z.object({
 });
 
 export type ListTransactionsQuery = z.infer<typeof listTransactionsSchema>["query"];
+export type ExportTransactionsQuery = z.infer<typeof exportTransactionsSchema>["query"];
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>["body"];
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>["body"];

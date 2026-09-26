@@ -12,6 +12,16 @@ export async function listTransactions(filters: TransactionFilters): Promise<Pag
   return res.data;
 }
 
+// Same filters as the list (paging ignored); the server returns a CSV file.
+export async function exportTransactionsCsv(filters: TransactionFilters): Promise<Blob> {
+  const { from, to, category, type } = filters;
+  const res = await apiClient.get<Blob>("/transactions/export", {
+    params: { from, to, category, type },
+    responseType: "blob",
+  });
+  return res.data;
+}
+
 export async function createTransaction(input: CreateTransactionInput): Promise<Transaction> {
   const res = await apiClient.post<{ transaction: Transaction }>("/transactions", input);
   return res.data.transaction;

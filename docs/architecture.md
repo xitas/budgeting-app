@@ -98,6 +98,22 @@ Appearance, saved in SecureStore).
   card `#161f2e`: CVD separation and >= 3:1 contrast pass), so a category
   keeps its identity across modes; custom (non-palette) colors pass through.
 
+## CSV export
+
+`GET /api/transactions/export` takes the same filters as the list (minus
+paging) — both go through one `buildTransactionFilter()`, so an export
+always matches what the same filters show on screen. Rows are oldest first,
+with the category joined in by name. `utils/csv.ts` quotes per RFC 4180,
+prefixes a `'` to text cells starting with `= + - @` (so a spreadsheet can't
+run a description as a formula — "CSV injection"), and adds a UTF-8 BOM so
+Excel reads non-ASCII names correctly.
+
+The endpoint needs the access token, so neither client can use a plain link:
+the web fetches it as a Blob and saves it via a temporary object URL
+(revoked after a delay — revoking immediately cancels the download in
+Chrome); mobile writes it to the cache folder with `expo-file-system` and
+opens the share sheet with `expo-sharing`.
+
 ## Data model decisions
 
 - **Reference, don't embed, for `Transaction`**: transactions reference
