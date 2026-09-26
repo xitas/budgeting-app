@@ -114,6 +114,30 @@ the web fetches it as a Blob and saves it via a temporary object URL
 Chrome); mobile writes it to the cache folder with `expo-file-system` and
 opens the share sheet with `expo-sharing`.
 
+## Dependency audit (last reviewed 2026-09-26)
+
+`npm audit` went from 25 findings (1 critical, 4 high, 20 moderate) to 15
+moderate. Fixed: `bcrypt` 5 → 6 (drops `@mapbox/node-pre-gyp` and its
+vulnerable `tar`; existing `$2b$` hashes verify unchanged), `node-cron` 3 → 4
+(no longer depends on `uuid`; ships its own types), plus in-range updates of
+`express`/`qs`, `morgan`, `react-router` and `brace-expansion`.
+
+The remaining 15 are two root causes inside Expo's own dependency tree,
+accepted until Expo ships updates:
+
+- **`uuid` < 11.1.1 via `xcode`** (Expo's iOS config-plugin tooling; ~13 of
+  the 15 are Expo packages flagged only for depending on it). The advisory
+  concerns `v3`/`v5`/`v6` called with a buffer; `xcode` only calls
+  `uuid.v4()`, and only at iOS build time — never in the app or server. An
+  npm `overrides` entry doesn't take effect on this nested lockfile entry.
+- **`decode-uri-component` ≤ 0.4.2 via `expo-router` → `query-string@7`**
+  (DoS on malformed percent-encoding in the mobile app's URL parsing). The
+  only fixed release (0.5.0) is ESM-only, which `query-string@7` can't
+  `require()`, and `npm audit fix --force` would downgrade `expo-router` to
+  v5, breaking SDK 57.
+
+Don't run `npm audit fix --force` in this repo for that reason.
+
 ## Data model decisions
 
 - **Reference, don't embed, for `Transaction`**: transactions reference
