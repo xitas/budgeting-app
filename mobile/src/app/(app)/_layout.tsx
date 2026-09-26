@@ -1,9 +1,10 @@
 import { Stack } from "expo-router";
-import { colors } from "../../components/ui/theme";
+import { useColors } from "../../context/ThemeContext";
 
 // Tabs are the base; every add/edit form opens as a modal on top, and the
 // secondary lists (budgets, categories, recurring) push from the More tab.
 export default function AppLayout() {
+  const colors = useColors();
   return (
     <Stack
       screenOptions={{

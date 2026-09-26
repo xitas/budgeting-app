@@ -162,7 +162,9 @@ data) and the client suite. Requires `npm run mongo:up` first.
 - [x] M11 — Mobile app scaffold (Expo / React Native in `mobile/`, auth screens, secure token storage)
 - [x] M12 — Mobile feature screens (tab bar; transactions, loans, budgets, categories, recurring; dashboard charts)
 
-**Future work**: CSV import/export, dark mode, CI (GitHub Actions), live deployment (needed before the mobile app is usable off the local network).
+- [x] Dark mode (web + mobile: follows the system by default, with a System / Light / Dark switch)
+
+**Future work**: CSV import/export, CI (GitHub Actions), live deployment (needed before the mobile app is usable off the local network).
 
 ## License
 

@@ -1,7 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { MONTH_NAMES, shiftMonth } from "../../lib/dates";
-import { colors } from "./theme";
+import { type Colors } from "./theme";
+import { useColors, useThemedStyles } from "../../context/ThemeContext";
 
 interface MonthSwitcherProps {
   month: number;
@@ -10,6 +11,8 @@ interface MonthSwitcherProps {
 }
 
 export function MonthSwitcher({ month, year, onChange }: MonthSwitcherProps) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useColors();
   return (
     <View style={styles.row}>
       <Pressable
@@ -35,7 +38,8 @@ export function MonthSwitcher({ month, year, onChange }: MonthSwitcherProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16 },
-  label: { fontSize: 16, fontWeight: "600", color: colors.text, minWidth: 150, textAlign: "center" },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    row: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16 },
+    label: { fontSize: 16, fontWeight: "600", color: colors.text, minWidth: 150, textAlign: "center" },
+  });

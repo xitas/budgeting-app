@@ -10,10 +10,11 @@ import { ColorSwatchPicker } from "../../../components/ui/ColorSwatchPicker";
 import { FormField } from "../../../components/ui/FormField";
 import { CenteredMessage, FormScreen } from "../../../components/ui/layout";
 import { Notice } from "../../../components/ui/Notice";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { useCategories, useDeleteCategory, useUpdateCategory } from "../../../features/categories/hooks";
 import { confirmDestructive } from "../../../lib/confirm";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useThemedStyles } from "../../../context/ThemeContext";
 
 // Type is fixed after creation (existing transactions depend on it).
 const editCategorySchema = z.object({
@@ -34,6 +35,7 @@ export default function EditCategoryScreen() {
 }
 
 function EditCategoryForm({ category }: { category: Category }) {
+  const styles = useThemedStyles(makeStyles);
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
   const [formError, setFormError] = useState<string | null>(null);
@@ -84,6 +86,7 @@ function EditCategoryForm({ category }: { category: Category }) {
   );
 }
 
-const styles = StyleSheet.create({
-  context: { fontSize: 14, color: colors.textMuted },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    context: { fontSize: 14, color: colors.textMuted },
+  });

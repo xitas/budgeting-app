@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius } from "../ui/theme";
+import { radius, type Colors } from "../ui/theme";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 interface ChartCardProps {
   title: string;
@@ -11,6 +12,7 @@ interface ChartCardProps {
 // Same contract as the web ChartCard: every chart ships a plain table twin,
 // so no value is only reachable through color or mark length.
 export function ChartCard({ title, children, tableView }: ChartCardProps) {
+  const styles = useThemedStyles(makeStyles);
   const [showTable, setShowTable] = useState(false);
 
   return (
@@ -32,6 +34,7 @@ export function ChartCard({ title, children, tableView }: ChartCardProps) {
 
 // Minimal table for the chart twins: first column left-aligned, numbers right.
 export function DataTable({ headers, rows }: { headers: string[]; rows: (string | number)[][] }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View>
       <View style={[styles.tableRow, styles.tableHeader]}>
@@ -54,26 +57,27 @@ export function DataTable({ headers, rows }: { headers: string[]; rows: (string 
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    padding: 16,
-    gap: 12,
-  },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  title: { fontSize: 15, fontWeight: "600", color: colors.text },
-  toggle: { fontSize: 13, color: colors.primary },
-  tableRow: {
-    flexDirection: "row",
-    paddingVertical: 7,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  tableHeader: { borderBottomWidth: 1 },
-  cell: { flex: 1, fontSize: 13, color: colors.text },
-  headerCell: { color: colors.textSubtle, fontWeight: "500" },
-  numeric: { textAlign: "right", fontVariant: ["tabular-nums"] },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.lg,
+      padding: 16,
+      gap: 12,
+    },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    title: { fontSize: 15, fontWeight: "600", color: colors.text },
+    toggle: { fontSize: 13, color: colors.link },
+    tableRow: {
+      flexDirection: "row",
+      paddingVertical: 7,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    tableHeader: { borderBottomWidth: 1 },
+    cell: { flex: 1, fontSize: 13, color: colors.text },
+    headerCell: { color: colors.textSubtle, fontWeight: "500" },
+    numeric: { textAlign: "right", fontVariant: ["tabular-nums"] },
+  });

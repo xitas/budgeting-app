@@ -4,11 +4,12 @@ import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollVi
 import type { Transaction, TransactionType } from "shared";
 import { CenteredMessage, Fab } from "../../../components/ui/layout";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { useCategories } from "../../../features/categories/hooks";
 import { useInfiniteTransactions } from "../../../features/transactions/hooks";
 import { formatDisplayDate } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useColors, useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
 
 type TypeFilter = "all" | TransactionType;
 
@@ -19,6 +20,9 @@ const TYPE_FILTERS: { value: TypeFilter; label: string }[] = [
 ];
 
 export default function TransactionsScreen() {
+  const schemeColor = useSchemeColor();
+  const styles = useThemedStyles(makeStyles);
+  const colors = useColors();
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const { data: categories } = useCategories();
@@ -62,7 +66,7 @@ export default function TransactionsScreen() {
                 <FilterChip
                   key={c.id}
                   label={c.name}
-                  color={c.color}
+                  color={schemeColor(c.color)}
                   selected={categoryFilter === c.id}
                   onPress={() => setCategoryFilter(c.id)}
                 />
@@ -79,7 +83,7 @@ export default function TransactionsScreen() {
             <CenteredMessage>No transactions found.</CenteredMessage>
           )
         }
-        ListFooterComponent={query.isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={colors.primary} /> : <View style={styles.fabSpace} />}
+        ListFooterComponent={query.isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={colors.link} /> : <View style={styles.fabSpace} />}
         onEndReached={() => {
           if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
         }}
@@ -92,6 +96,8 @@ export default function TransactionsScreen() {
 }
 
 function TransactionRow({ tx, onPress }: { tx: Transaction; onPress: () => void }) {
+  const schemeColor = useSchemeColor();
+  const styles = useThemedStyles(makeStyles);
   const isIncome = tx.type === "income";
   return (
     <Pressable
@@ -100,7 +106,7 @@ function TransactionRow({ tx, onPress }: { tx: Transaction; onPress: () => void 
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
     >
-      <View style={[styles.dot, { backgroundColor: tx.category.color }]} />
+      <View style={[styles.dot, { backgroundColor: schemeColor(tx.category.color) }]} />
       <View style={styles.rowMain}>
         <Text style={styles.rowTitle} numberOfLines={1}>
           {tx.description || tx.category.name}
@@ -119,6 +125,7 @@ function TransactionRow({ tx, onPress }: { tx: Transaction; onPress: () => void 
 }
 
 function FilterChip({ label, color, selected, onPress }: { label: string; color?: string; selected: boolean; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -132,34 +139,35 @@ function FilterChip({ label, color, selected, onPress }: { label: string; color?
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  filters: { padding: 16, gap: 12 },
-  chips: { gap: 8 },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: colors.inputBorder,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: colors.surface,
-  },
-  chipSelected: { borderColor: colors.primary, backgroundColor: "#eff6ff" },
-  chipDot: { width: 8, height: 8, borderRadius: 4 },
-  chipLabel: { fontSize: 13, color: colors.text },
-  chipLabelSelected: { color: colors.primaryPressed, fontWeight: "600" },
-  row: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.surface },
-  rowPressed: { backgroundColor: colors.border },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  rowMain: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: 15, color: colors.text },
-  rowMeta: { fontSize: 13, color: colors.textSubtle },
-  amount: { fontSize: 15, fontWeight: "600", color: colors.text, fontVariant: ["tabular-nums"] },
-  amountIncome: { color: colors.positive },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-  footer: { padding: 16 },
-  fabSpace: { height: 88 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    filters: { padding: 16, gap: 12 },
+    chips: { gap: 8 },
+    chip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      borderRadius: 999,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: colors.surface,
+    },
+    chipSelected: { borderColor: colors.link, backgroundColor: colors.selectedBg },
+    chipDot: { width: 8, height: 8, borderRadius: 4 },
+    chipLabel: { fontSize: 13, color: colors.text },
+    chipLabelSelected: { color: colors.selectedText, fontWeight: "600" },
+    row: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.surface },
+    rowPressed: { backgroundColor: colors.border },
+    dot: { width: 10, height: 10, borderRadius: 5 },
+    rowMain: { flex: 1, gap: 2 },
+    rowTitle: { fontSize: 15, color: colors.text },
+    rowMeta: { fontSize: 13, color: colors.textSubtle },
+    amount: { fontSize: 15, fontWeight: "600", color: colors.text, fontVariant: ["tabular-nums"] },
+    amountIncome: { color: colors.positive },
+    separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
+    footer: { padding: 16 },
+    fabSpace: { height: 88 },
+  });

@@ -9,10 +9,11 @@ import { DateField } from "../../../components/ui/DateField";
 import { FormField } from "../../../components/ui/FormField";
 import { FormScreen } from "../../../components/ui/layout";
 import { Notice } from "../../../components/ui/Notice";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { useAddRepayment, useLoans } from "../../../features/loans/hooks";
 import { todayIso } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useThemedStyles } from "../../../context/ThemeContext";
 
 const addRepaymentSchema = z.object({
   amount: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Amount must be greater than 0"),
@@ -22,6 +23,7 @@ const addRepaymentSchema = z.object({
 type AddRepaymentFormValues = z.infer<typeof addRepaymentSchema>;
 
 export default function AddRepaymentScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: loans } = useLoans();
   const loan = loans?.find((l) => l.id === id);
@@ -68,6 +70,7 @@ export default function AddRepaymentScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  context: { fontSize: 14, color: colors.textMuted },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    context: { fontSize: 14, color: colors.textMuted },
+  });

@@ -9,11 +9,12 @@ import { CategoryPicker } from "../../../components/ui/CategoryPicker";
 import { FormField } from "../../../components/ui/FormField";
 import { FormScreen } from "../../../components/ui/layout";
 import { Notice } from "../../../components/ui/Notice";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { useBudgets, useCreateBudget } from "../../../features/budgets/hooks";
 import { useCategories } from "../../../features/categories/hooks";
 import { MONTH_NAMES } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useThemedStyles } from "../../../context/ThemeContext";
 
 const budgetFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
@@ -22,6 +23,7 @@ const budgetFormSchema = z.object({
 type BudgetFormValues = z.infer<typeof budgetFormSchema>;
 
 export default function NewBudgetScreen() {
+  const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{ month: string; year: string }>();
   const month = Number(params.month);
   const year = Number(params.year);
@@ -75,6 +77,7 @@ export default function NewBudgetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  context: { fontSize: 14, color: colors.textMuted },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    context: { fontSize: 14, color: colors.textMuted },
+  });

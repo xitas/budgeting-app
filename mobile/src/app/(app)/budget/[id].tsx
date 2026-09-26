@@ -9,11 +9,12 @@ import { Button } from "../../../components/ui/Button";
 import { FormField } from "../../../components/ui/FormField";
 import { CenteredMessage, FormScreen } from "../../../components/ui/layout";
 import { Notice } from "../../../components/ui/Notice";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { useBudgets, useDeleteBudget, useUpdateBudget } from "../../../features/budgets/hooks";
 import { confirmDestructive } from "../../../lib/confirm";
 import { MONTH_NAMES } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
 
 const editBudgetSchema = z.object({
   limit: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Limit must be greater than 0"),
@@ -32,6 +33,8 @@ export default function EditBudgetScreen() {
 }
 
 function EditBudgetForm({ budget }: { budget: Budget }) {
+  const schemeColor = useSchemeColor();
+  const styles = useThemedStyles(makeStyles);
   const updateBudget = useUpdateBudget();
   const deleteBudget = useDeleteBudget();
   const [formError, setFormError] = useState<string | null>(null);
@@ -65,7 +68,7 @@ function EditBudgetForm({ budget }: { budget: Budget }) {
   return (
     <FormScreen>
       <View style={styles.header}>
-        <View style={[styles.dot, { backgroundColor: budget.category.color }]} />
+        <View style={[styles.dot, { backgroundColor: schemeColor(budget.category.color) }]} />
         <Text style={styles.name}>{budget.category.name}</Text>
       </View>
       <Text style={styles.context}>
@@ -79,9 +82,10 @@ function EditBudgetForm({ budget }: { budget: Budget }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dot: { width: 12, height: 12, borderRadius: 6 },
-  name: { fontSize: 18, fontWeight: "600", color: colors.text },
-  context: { fontSize: 14, color: colors.textMuted },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    header: { flexDirection: "row", alignItems: "center", gap: 8 },
+    dot: { width: 12, height: 12, borderRadius: 6 },
+    name: { fontSize: 18, fontWeight: "600", color: colors.text },
+    context: { fontSize: 14, color: colors.textMuted },
+  });

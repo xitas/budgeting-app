@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text } from "react-native";
-import { colors, radius } from "./theme";
+import { radius, type Colors } from "./theme";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 interface ButtonProps {
   title: string;
@@ -9,6 +10,7 @@ interface ButtonProps {
 }
 
 export function Button({ title, onPress, disabled, variant = "primary" }: ButtonProps) {
+  const styles = useThemedStyles(makeStyles);
   const isPrimary = variant === "primary";
   return (
     <Pressable
@@ -27,19 +29,20 @@ export function Button({ title, onPress, disabled, variant = "primary" }: Button
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: "center",
-  },
-  primary: { backgroundColor: colors.primary },
-  primaryPressed: { backgroundColor: colors.primaryPressed },
-  ghost: { borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.surface },
-  ghostPressed: { backgroundColor: colors.border },
-  disabled: { opacity: 0.5 },
-  label: { fontSize: 15, fontWeight: "600" },
-  primaryLabel: { color: "#ffffff" },
-  ghostLabel: { color: colors.text },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    base: {
+      borderRadius: radius.md,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      alignItems: "center",
+    },
+    primary: { backgroundColor: colors.primary },
+    primaryPressed: { backgroundColor: colors.primaryPressed },
+    ghost: { borderWidth: 1, borderColor: colors.inputBorder, backgroundColor: colors.surface },
+    ghostPressed: { backgroundColor: colors.border },
+    disabled: { opacity: 0.5 },
+    label: { fontSize: 15, fontWeight: "600" },
+    primaryLabel: { color: colors.onPrimary },
+    ghostLabel: { color: colors.text },
+  });

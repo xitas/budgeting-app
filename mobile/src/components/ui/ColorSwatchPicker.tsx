@@ -1,7 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { CATEGORICAL_PALETTE } from "shared";
-import { colors } from "./theme";
+import { type Colors } from "./theme";
+import { useSchemeColor, useThemedStyles } from "../../context/ThemeContext";
 
 const SWATCH_NAMES = ["Blue", "Orange", "Aqua", "Yellow", "Magenta", "Green", "Violet", "Red"];
 
@@ -15,6 +16,9 @@ interface ColorSwatchPickerProps {
 // The validated categorical palette only (no free-form picker on mobile), so
 // every category color stays distinguishable in the charts.
 export function ColorSwatchPicker({ label, value, onChange, error }: ColorSwatchPickerProps) {
+  const styles = useThemedStyles(makeStyles);
+  // Shown in the current scheme's step; the stored value stays the light hex.
+  const schemeColor = useSchemeColor();
   const isCustom = value !== undefined && !CATEGORICAL_PALETTE.some((hex) => hex.toLowerCase() === value.toLowerCase());
   return (
     <View style={styles.wrapper}>
@@ -29,7 +33,7 @@ export function ColorSwatchPicker({ label, value, onChange, error }: ColorSwatch
               accessibilityLabel={SWATCH_NAMES[i]}
               accessibilityState={{ selected }}
               onPress={() => onChange(hex)}
-              style={[styles.swatch, { backgroundColor: hex }, selected && styles.swatchSelected]}
+              style={[styles.swatch, { backgroundColor: schemeColor(hex) }, selected && styles.swatchSelected]}
             >
               {selected ? <Ionicons name="checkmark" size={18} color="#ffffff" /> : null}
             </Pressable>
@@ -42,12 +46,13 @@ export function ColorSwatchPicker({ label, value, onChange, error }: ColorSwatch
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { gap: 6 },
-  label: { fontSize: 14, fontWeight: "500", color: colors.text },
-  row: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  swatch: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
-  swatchSelected: { borderWidth: 3, borderColor: colors.text },
-  hint: { fontSize: 13, color: colors.textSubtle },
-  error: { fontSize: 13, color: colors.danger },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    wrapper: { gap: 6 },
+    label: { fontSize: 14, fontWeight: "500", color: colors.text },
+    row: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    swatch: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
+    swatchSelected: { borderWidth: 3, borderColor: colors.text },
+    hint: { fontSize: 13, color: colors.textSubtle },
+    error: { fontSize: 13, color: colors.danger },
+  });

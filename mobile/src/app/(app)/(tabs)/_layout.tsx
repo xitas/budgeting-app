@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
 import type { ColorValue } from "react-native";
-import { colors } from "../../../components/ui/theme";
+import { useColors } from "../../../context/ThemeContext";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -13,10 +13,12 @@ function tabIcon(name: IconName, focusedName: IconName) {
 }
 
 export default function TabsLayout() {
+  const colors = useColors();
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.link,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         tabBarInactiveTintColor: colors.textSubtle,
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,

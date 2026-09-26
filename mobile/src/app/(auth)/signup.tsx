@@ -9,9 +9,10 @@ import { Button } from "../../components/ui/Button";
 import { FormField } from "../../components/ui/FormField";
 import { Notice } from "../../components/ui/Notice";
 import { TextLink } from "../../components/ui/TextLink";
-import { colors } from "../../components/ui/theme";
+import { type Colors } from "../../components/ui/theme";
 import { useAuth } from "../../context/AuthContext";
 import { extractErrorMessage } from "../../lib/errors";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 const signupSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -22,6 +23,7 @@ const signupSchema = z.object({
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { signup } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const {
@@ -75,7 +77,8 @@ export default function SignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  footer: { flexDirection: "row", alignItems: "center", gap: 6 },
-  footerText: { fontSize: 14, color: colors.textMuted },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    footer: { flexDirection: "row", alignItems: "center", gap: 6 },
+    footerText: { fontSize: 14, color: colors.textMuted },
+  });

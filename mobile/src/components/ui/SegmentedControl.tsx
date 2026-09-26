@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius } from "./theme";
+import { radius, type Colors } from "./theme";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 interface Option<T extends string> {
   value: T;
@@ -16,6 +17,7 @@ interface SegmentedControlProps<T extends string> {
 // Stands in for the web app's small <select>s (type, direction, frequency):
 // every option visible, one tap to choose.
 export function SegmentedControl<T extends string>({ label, options, value, onChange }: SegmentedControlProps<T>) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.wrapper}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
@@ -39,18 +41,19 @@ export function SegmentedControl<T extends string>({ label, options, value, onCh
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { gap: 4 },
-  label: { fontSize: 14, fontWeight: "500", color: colors.text },
-  track: {
-    flexDirection: "row",
-    backgroundColor: colors.border,
-    borderRadius: radius.md,
-    padding: 3,
-    gap: 3,
-  },
-  segment: { flex: 1, paddingVertical: 8, borderRadius: radius.md - 2, alignItems: "center" },
-  segmentSelected: { backgroundColor: colors.surface },
-  segmentLabel: { fontSize: 14, color: colors.textMuted },
-  segmentLabelSelected: { color: colors.text, fontWeight: "600" },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    wrapper: { gap: 4 },
+    label: { fontSize: 14, fontWeight: "500", color: colors.text },
+    track: {
+      flexDirection: "row",
+      backgroundColor: colors.border,
+      borderRadius: radius.md,
+      padding: 3,
+      gap: 3,
+    },
+    segment: { flex: 1, paddingVertical: 8, borderRadius: radius.md - 2, alignItems: "center" },
+    segmentSelected: { backgroundColor: colors.surface },
+    segmentLabel: { fontSize: 14, color: colors.textMuted },
+    segmentLabelSelected: { color: colors.text, fontWeight: "600" },
+  });

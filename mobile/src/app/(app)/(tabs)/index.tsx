@@ -6,7 +6,7 @@ import { SpendingByCategoryChart } from "../../../components/charts/SpendingByCa
 import { StatTile } from "../../../components/charts/StatTile";
 import { MonthSwitcher } from "../../../components/ui/MonthSwitcher";
 import { Notice } from "../../../components/ui/Notice";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { useAuth } from "../../../context/AuthContext";
 import {
   useBudgetVsActual,
@@ -14,8 +14,10 @@ import {
   useIncomeVsExpense,
   useSpendingByCategory,
 } from "../../../features/dashboard/hooks";
+import { useThemedStyles } from "../../../context/ThemeContext";
 
 export default function DashboardScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { user } = useAuth();
   const now = new Date();
   const [period, setPeriod] = useState({ month: now.getMonth() + 1, year: now.getFullYear() });
@@ -58,8 +60,9 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16, gap: 16, paddingBottom: 32 },
-  greeting: { fontSize: 20, fontWeight: "600", color: colors.text },
-  tiles: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    container: { padding: 16, gap: 16, paddingBottom: 32 },
+    greeting: { fontSize: 20, fontWeight: "600", color: colors.text },
+    tiles: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  });

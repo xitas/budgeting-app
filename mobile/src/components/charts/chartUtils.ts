@@ -1,8 +1,3 @@
-import { colors } from "../ui/theme";
-
-// Recessive chart chrome: one step off the surface, never loud.
-export const GRID_COLOR = colors.border;
-export const AXIS_TEXT = colors.textSubtle;
 
 // Rounds a max value up to a clean axis top (1 / 2 / 2.5 / 5 × 10^k) so
 // gridline labels read as 0 / 500 / 1,000 rather than 0 / 437 / 874.

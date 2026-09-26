@@ -9,9 +9,10 @@ import { Button } from "../../components/ui/Button";
 import { FormField } from "../../components/ui/FormField";
 import { Notice } from "../../components/ui/Notice";
 import { TextLink } from "../../components/ui/TextLink";
-import { colors } from "../../components/ui/theme";
+import { type Colors } from "../../components/ui/theme";
 import * as authApi from "../../features/auth/api";
 import { extractErrorMessage } from "../../lib/errors";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 const emailSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
@@ -47,6 +48,7 @@ export default function ForgotPasswordScreen() {
 }
 
 function RequestCodeStep({ onSent }: { onSent: (email: string) => void }) {
+  const styles = useThemedStyles(makeStyles);
   const [serverError, setServerError] = useState<string | null>(null);
   const {
     control,
@@ -88,6 +90,7 @@ function RequestCodeStep({ onSent }: { onSent: (email: string) => void }) {
 }
 
 function EnterCodeStep({ email, onChangeEmail }: { email: string; onChangeEmail: () => void }) {
+  const styles = useThemedStyles(makeStyles);
   const [serverError, setServerError] = useState<string | null>(null);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
   const {
@@ -164,8 +167,9 @@ function EnterCodeStep({ email, onChangeEmail }: { email: string; onChangeEmail:
   );
 }
 
-const styles = StyleSheet.create({
-  body: { fontSize: 14, color: colors.textMuted, lineHeight: 20 },
-  email: { fontWeight: "600", color: colors.text },
-  codeInput: { letterSpacing: 6, fontSize: 18 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    body: { fontSize: 14, color: colors.textMuted, lineHeight: 20 },
+    email: { fontWeight: "600", color: colors.text },
+    codeInput: { letterSpacing: 6, fontSize: 18 },
+  });

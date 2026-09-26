@@ -10,9 +10,10 @@ import { DateField } from "../../../components/ui/DateField";
 import { FormField } from "../../../components/ui/FormField";
 import { CenteredMessage, FormScreen } from "../../../components/ui/layout";
 import { Notice } from "../../../components/ui/Notice";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { useLoans, useUpdateLoan } from "../../../features/loans/hooks";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useColors, useThemedStyles } from "../../../context/ThemeContext";
 
 // Direction isn't editable: flipping it would invert the cash flow of the
 // loan's already-recorded transaction (the server rejects it too).
@@ -37,6 +38,8 @@ export default function EditLoanScreen() {
 }
 
 function EditLoanForm({ loan }: { loan: Loan }) {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useColors();
   const updateLoan = useUpdateLoan();
   const [formError, setFormError] = useState<string | null>(null);
   const {
@@ -97,7 +100,8 @@ function EditLoanForm({ loan }: { loan: Loan }) {
   );
 }
 
-const styles = StyleSheet.create({
-  switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  switchLabel: { flex: 1, fontSize: 15, color: colors.text },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+    switchLabel: { flex: 1, fontSize: 15, color: colors.text },
+  });

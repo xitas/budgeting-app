@@ -9,9 +9,10 @@ import { Button } from "../../components/ui/Button";
 import { FormField } from "../../components/ui/FormField";
 import { Notice } from "../../components/ui/Notice";
 import { TextLink } from "../../components/ui/TextLink";
-import { colors } from "../../components/ui/theme";
+import { type Colors } from "../../components/ui/theme";
 import { useAuth } from "../../context/AuthContext";
 import { extractErrorMessage } from "../../lib/errors";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
@@ -21,6 +22,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { login } = useAuth();
   const { notice } = useLocalSearchParams<{ notice?: string }>();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -80,7 +82,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  footer: { flexDirection: "row", alignItems: "center", gap: 6 },
-  footerText: { fontSize: 14, color: colors.textMuted },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    footer: { flexDirection: "row", alignItems: "center", gap: 6 },
+    footerText: { fontSize: 14, color: colors.textMuted },
+  });

@@ -74,6 +74,30 @@ data hooks. Differences from the web client worth knowing:
   charts' palette slots and each ships a "View as table" twin; tapping a
   month in the trend chart plays the role the hover tooltip has on web.
 
+## Dark mode
+
+Both apps follow the OS setting by default, with a System / Light / Dark
+override (web: nav-bar toggle, saved in `localStorage`; mobile: More →
+Appearance, saved in SecureStore).
+
+- **Web** — instead of adding `dark:` variants to every class, `index.css`
+  re-steps Tailwind's color variables under `.dark` (the slate scale inverts:
+  slate-50 page → darkest, slate-900 text → lightest; status tints get dark
+  equivalents). Two roles that shared a color with buttons got their own
+  tokens: `surface` (cards; was `bg-white`, but `text-white` still labels
+  buttons) and `link` (was `text-blue-600`, but `bg-blue-600` still fills
+  buttons). An inline script in `index.html` sets the class before first
+  paint, so there's no white flash.
+- **Mobile** — `theme.ts` holds a light and a dark color set with identical
+  keys; styles are factories (`makeStyles(colors)`) memoized per scheme via
+  `useThemedStyles`. The override goes through `Appearance.setColorScheme`,
+  so native UI we don't style (date pickers, alerts, keyboard) follows too.
+- **Charts & categories** — category colors are stored as light-palette
+  hex. `schemeColor()` in `shared/` maps a stored palette color to the same
+  slot's dark step (`CATEGORICAL_PALETTE_DARK`, validated against the dark
+  card `#161f2e`: CVD separation and >= 3:1 contrast pass), so a category
+  keeps its identity across modes; custom (non-palette) colors pass through.
+
 ## Data model decisions
 
 - **Reference, don't embed, for `Transaction`**: transactions reference

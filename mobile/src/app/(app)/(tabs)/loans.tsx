@@ -3,13 +3,15 @@ import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "rea
 import type { Loan } from "shared";
 import { CenteredMessage, Fab } from "../../../components/ui/layout";
 import { Meter } from "../../../components/ui/Meter";
-import { colors, radius } from "../../../components/ui/theme";
+import { radius, type Colors } from "../../../components/ui/theme";
 import { useLoans } from "../../../features/loans/hooks";
 import { describeLoanState, loanColor } from "../../../features/loans/loanDisplay";
 import { formatDisplayDate } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
 
 export default function LoansScreen() {
+  const styles = useThemedStyles(makeStyles);
   const query = useLoans();
 
   return (
@@ -39,6 +41,8 @@ export default function LoansScreen() {
 }
 
 function LoanCard({ loan, onPress }: { loan: Loan; onPress: () => void }) {
+  const schemeColor = useSchemeColor();
+  const styles = useThemedStyles(makeStyles);
   const closed = loan.status !== "open";
   return (
     <Pressable
@@ -52,7 +56,7 @@ function LoanCard({ loan, onPress }: { loan: Loan; onPress: () => void }) {
         </Text>
         <Text style={styles.direction}>{loan.direction === "lent" ? "You lent" : "You borrowed"}</Text>
       </View>
-      <Meter value={loan.repaid} max={loan.principal} color={loanColor(loan)} />
+      <Meter value={loan.repaid} max={loan.principal} color={schemeColor(loanColor(loan))} />
       <View style={styles.footer}>
         <Text style={styles.meta}>
           {describeLoanState(loan)} · {formatDisplayDate(loan.date)}
@@ -65,24 +69,25 @@ function LoanCard({ loan, onPress }: { loan: Loan; onPress: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  list: { padding: 16, gap: 12 },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    padding: 16,
-    gap: 10,
-  },
-  cardPressed: { backgroundColor: colors.background },
-  cardClosed: { opacity: 0.7 },
-  header: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
-  name: { flex: 1, fontSize: 16, fontWeight: "600", color: colors.text },
-  direction: { fontSize: 13, color: colors.textSubtle },
-  footer: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
-  meta: { flex: 1, fontSize: 13, color: colors.textMuted },
-  amounts: { fontSize: 13, color: colors.text, fontVariant: ["tabular-nums"] },
-  fabSpace: { height: 72 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    list: { padding: 16, gap: 12 },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.lg,
+      padding: 16,
+      gap: 10,
+    },
+    cardPressed: { backgroundColor: colors.background },
+    cardClosed: { opacity: 0.7 },
+    header: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: 8 },
+    name: { flex: 1, fontSize: 16, fontWeight: "600", color: colors.text },
+    direction: { fontSize: 13, color: colors.textSubtle },
+    footer: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
+    meta: { flex: 1, fontSize: 13, color: colors.textMuted },
+    amounts: { fontSize: 13, color: colors.text, fontVariant: ["tabular-nums"] },
+    fabSpace: { height: 72 },
+  });

@@ -1,7 +1,9 @@
 import { StyleSheet, Text } from "react-native";
-import { colors } from "./theme";
+import { type Colors } from "./theme";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 export function TextLink({ title, onPress }: { title: string; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Text accessibilityRole="link" onPress={onPress} style={styles.link} suppressHighlighting={false}>
       {title}
@@ -9,6 +11,7 @@ export function TextLink({ title, onPress }: { title: string; onPress: () => voi
   );
 }
 
-const styles = StyleSheet.create({
-  link: { color: colors.primary, fontSize: 14, paddingVertical: 4 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    link: { color: colors.link, fontSize: 14, paddingVertical: 4 },
+  });

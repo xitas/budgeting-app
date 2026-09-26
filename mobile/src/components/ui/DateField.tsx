@@ -2,7 +2,8 @@ import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/d
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { formatDisplayDate, isoToLocalDate, localDateToIso } from "../../lib/dates";
-import { colors, radius } from "./theme";
+import { radius, type Colors } from "./theme";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 interface DateFieldProps {
   label: string;
@@ -16,6 +17,7 @@ interface DateFieldProps {
 // Native pickers: Android opens its system dialog; iOS expands an inline
 // calendar under the field.
 export function DateField({ label, value, onChange, error, placeholder = "Pick a date", onClear }: DateFieldProps) {
+  const styles = useThemedStyles(makeStyles);
   const [iosOpen, setIosOpen] = useState(false);
   const current = value ? isoToLocalDate(value) : new Date();
 
@@ -65,22 +67,23 @@ export function DateField({ label, value, onChange, error, placeholder = "Pick a
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { gap: 4 },
-  label: { fontSize: 14, fontWeight: "500", color: colors.text },
-  row: { flexDirection: "row", alignItems: "center", gap: 12 },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.inputBorder,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    backgroundColor: colors.surface,
-  },
-  inputError: { borderColor: colors.danger },
-  value: { fontSize: 15, color: colors.text },
-  placeholder: { fontSize: 15, color: colors.textSubtle },
-  clear: { fontSize: 14, color: colors.primary },
-  error: { fontSize: 13, color: colors.danger },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    wrapper: { gap: 4 },
+    label: { fontSize: 14, fontWeight: "500", color: colors.text },
+    row: { flexDirection: "row", alignItems: "center", gap: 12 },
+    input: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.inputBorder,
+      borderRadius: radius.md,
+      paddingHorizontal: 12,
+      paddingVertical: 11,
+      backgroundColor: colors.surface,
+    },
+    inputError: { borderColor: colors.danger },
+    value: { fontSize: 15, color: colors.text },
+    placeholder: { fontSize: 15, color: colors.textSubtle },
+    clear: { fontSize: 14, color: colors.link },
+    error: { fontSize: 13, color: colors.danger },
+  });

@@ -10,12 +10,13 @@ import { DateField } from "../../../components/ui/DateField";
 import { FormField } from "../../../components/ui/FormField";
 import { CenteredMessage, FormScreen } from "../../../components/ui/layout";
 import { Notice } from "../../../components/ui/Notice";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { describeFrequency } from "../../../features/recurring/describe";
 import { useDeleteRecurring, useRecurring, useUpdateRecurring } from "../../../features/recurring/hooks";
 import { confirmDestructive } from "../../../lib/confirm";
 import { formatDisplayDate } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useColors, useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
 
 // Category, type, frequency, interval and start date are fixed after
 // creation (the server rejects changes) — delete and recreate instead.
@@ -39,6 +40,9 @@ export default function EditRecurringScreen() {
 }
 
 function EditRecurringForm({ rule }: { rule: RecurringTransaction }) {
+  const schemeColor = useSchemeColor();
+  const styles = useThemedStyles(makeStyles);
+  const colors = useColors();
   const updateRecurring = useUpdateRecurring();
   const deleteRecurring = useDeleteRecurring();
   const [formError, setFormError] = useState<string | null>(null);
@@ -85,7 +89,7 @@ function EditRecurringForm({ rule }: { rule: RecurringTransaction }) {
   return (
     <FormScreen>
       <View style={styles.header}>
-        <View style={[styles.dot, { backgroundColor: rule.category.color }]} />
+        <View style={[styles.dot, { backgroundColor: schemeColor(rule.category.color) }]} />
         <Text style={styles.name}>{rule.category.name}</Text>
       </View>
       <Text style={styles.context}>
@@ -124,11 +128,12 @@ function EditRecurringForm({ rule }: { rule: RecurringTransaction }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dot: { width: 12, height: 12, borderRadius: 6 },
-  name: { fontSize: 18, fontWeight: "600", color: colors.text },
-  context: { fontSize: 14, color: colors.textMuted },
-  switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  switchLabel: { flex: 1, fontSize: 15, color: colors.text },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    header: { flexDirection: "row", alignItems: "center", gap: 8 },
+    dot: { width: 12, height: 12, borderRadius: 6 },
+    name: { fontSize: 18, fontWeight: "600", color: colors.text },
+    context: { fontSize: 14, color: colors.textMuted },
+    switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+    switchLabel: { flex: 1, fontSize: 15, color: colors.text },
+  });

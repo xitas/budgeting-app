@@ -6,14 +6,18 @@ import { Button } from "../../../components/ui/Button";
 import { Card, CenteredMessage, SectionTitle } from "../../../components/ui/layout";
 import { Meter } from "../../../components/ui/Meter";
 import { Notice } from "../../../components/ui/Notice";
-import { colors } from "../../../components/ui/theme";
+import { type Colors } from "../../../components/ui/theme";
 import { useDeleteLoan, useLoans, useRemoveRepayment } from "../../../features/loans/hooks";
 import { describeLoanState, loanColor } from "../../../features/loans/loanDisplay";
 import { confirmDestructive } from "../../../lib/confirm";
 import { formatDisplayDate } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { useColors, useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
 
 export default function LoanDetailScreen() {
+  const schemeColor = useSchemeColor();
+  const styles = useThemedStyles(makeStyles);
+  const colors = useColors();
   const { id } = useLocalSearchParams<{ id: string }>();
   // Read live from the list query, so repayments added in the modal show up
   // here as soon as it closes.
@@ -67,7 +71,7 @@ export default function LoanDetailScreen() {
               hitSlop={12}
               onPress={() => router.push({ pathname: "/loan/edit", params: { id: loan.id } })}
             >
-              <Ionicons name="create-outline" size={22} color={colors.primary} />
+              <Ionicons name="create-outline" size={22} color={colors.link} />
             </Pressable>
           ),
         }}
@@ -76,7 +80,7 @@ export default function LoanDetailScreen() {
       <Card style={styles.summary}>
         <Text style={styles.direction}>{loan.direction === "lent" ? "You lent" : "You borrowed"}</Text>
         <Text style={styles.principal}>{loan.principal.toFixed(2)}</Text>
-        <Meter value={loan.repaid} max={loan.principal} color={loanColor(loan)} />
+        <Meter value={loan.repaid} max={loan.principal} color={schemeColor(loanColor(loan))} />
         <View style={styles.summaryRow}>
           <Text style={styles.meta}>{describeLoanState(loan)}</Text>
           <Text style={styles.meta}>Repaid {loan.repaid.toFixed(2)}</Text>
@@ -124,16 +128,17 @@ export default function LoanDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 16, gap: 16, paddingBottom: 40 },
-  summary: { gap: 8 },
-  direction: { fontSize: 14, color: colors.textSubtle },
-  principal: { fontSize: 32, fontWeight: "600", color: colors.text },
-  summaryRow: { flexDirection: "row", justifyContent: "space-between" },
-  meta: { fontSize: 13, color: colors.textMuted },
-  repayments: { paddingVertical: 4 },
-  repayment: { flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 12 },
-  repaymentBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-  repaymentMain: { flex: 1, gap: 2 },
-  repaymentAmount: { fontSize: 15, fontWeight: "600", color: colors.text, fontVariant: ["tabular-nums"] },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    container: { padding: 16, gap: 16, paddingBottom: 40 },
+    summary: { gap: 8 },
+    direction: { fontSize: 14, color: colors.textSubtle },
+    principal: { fontSize: 32, fontWeight: "600", color: colors.text },
+    summaryRow: { flexDirection: "row", justifyContent: "space-between" },
+    meta: { fontSize: 13, color: colors.textMuted },
+    repayments: { paddingVertical: 4 },
+    repayment: { flexDirection: "row", alignItems: "center", paddingVertical: 10, gap: 12 },
+    repaymentBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+    repaymentMain: { flex: 1, gap: 2 },
+    repaymentAmount: { fontSize: 15, fontWeight: "600", color: colors.text, fontVariant: ["tabular-nums"] },
+  });

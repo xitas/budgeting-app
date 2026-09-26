@@ -3,13 +3,15 @@ import { useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import type { RecurringTransaction } from "shared";
 import { CenteredMessage, Fab } from "../../components/ui/layout";
-import { colors, radius } from "../../components/ui/theme";
+import { radius, type Colors } from "../../components/ui/theme";
 import { describeFrequency } from "../../features/recurring/describe";
 import { useRecurring, useRunRecurringNow } from "../../features/recurring/hooks";
 import { formatDisplayDate } from "../../lib/dates";
 import { extractErrorMessage } from "../../lib/errors";
+import { useSchemeColor, useThemedStyles } from "../../context/ThemeContext";
 
 export default function RecurringScreen() {
+  const styles = useThemedStyles(makeStyles);
   const query = useRecurring();
   const runNow = useRunRecurringNow();
   const [runMessages, setRunMessages] = useState<Record<string, string>>({});
@@ -63,6 +65,8 @@ interface RecurringCardProps {
 }
 
 function RecurringCard({ rule, runMessage, onPress, onRunNow }: RecurringCardProps) {
+  const schemeColor = useSchemeColor();
+  const styles = useThemedStyles(makeStyles);
   const isIncome = rule.type === "income";
   return (
     <Pressable
@@ -71,7 +75,7 @@ function RecurringCard({ rule, runMessage, onPress, onRunNow }: RecurringCardPro
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed, !rule.isActive && styles.cardPaused]}
     >
       <View style={styles.header}>
-        <View style={[styles.dot, { backgroundColor: rule.category.color }]} />
+        <View style={[styles.dot, { backgroundColor: schemeColor(rule.category.color) }]} />
         <Text style={styles.name} numberOfLines={1}>
           {rule.description || rule.category.name}
           {!rule.isActive ? <Text style={styles.paused}> (paused)</Text> : null}
@@ -97,27 +101,28 @@ function RecurringCard({ rule, runMessage, onPress, onRunNow }: RecurringCardPro
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  list: { padding: 16, gap: 12 },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    padding: 16,
-    gap: 6,
-  },
-  cardPressed: { backgroundColor: colors.background },
-  cardPaused: { opacity: 0.6 },
-  header: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  name: { flex: 1, fontSize: 16, fontWeight: "500", color: colors.text },
-  paused: { fontSize: 13, fontWeight: "400", color: colors.textSubtle },
-  amount: { fontSize: 15, fontWeight: "600", color: colors.text, fontVariant: ["tabular-nums"] },
-  amountIncome: { color: colors.positive },
-  meta: { fontSize: 13, color: colors.textMuted },
-  footer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 24 },
-  runNow: { fontSize: 14, color: colors.primary, fontWeight: "500" },
-  fabSpace: { height: 72 },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    list: { padding: 16, gap: 12 },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.lg,
+      padding: 16,
+      gap: 6,
+    },
+    cardPressed: { backgroundColor: colors.background },
+    cardPaused: { opacity: 0.6 },
+    header: { flexDirection: "row", alignItems: "center", gap: 8 },
+    dot: { width: 10, height: 10, borderRadius: 5 },
+    name: { flex: 1, fontSize: 16, fontWeight: "500", color: colors.text },
+    paused: { fontSize: 13, fontWeight: "400", color: colors.textSubtle },
+    amount: { fontSize: 15, fontWeight: "600", color: colors.text, fontVariant: ["tabular-nums"] },
+    amountIncome: { color: colors.positive },
+    meta: { fontSize: 13, color: colors.textMuted },
+    footer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 24 },
+    runNow: { fontSize: 14, color: colors.link, fontWeight: "500" },
+    fabSpace: { height: 72 },
+  });
