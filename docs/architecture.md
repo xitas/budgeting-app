@@ -138,6 +138,32 @@ accepted until Expo ships updates:
 
 Don't run `npm audit fix --force` in this repo for that reason.
 
+## CSV import
+
+The file never goes to the server. The web client parses it
+(`features/import/parse.ts` — pure functions, unit-tested) in three steps:
+
+1. **Read** — RFC 4180 parsing with delimiter detection (`,` `;` tab), BOM
+   stripped.
+2. **Map** — header names are guessed into date / description / amount (or
+   separate debit + credit) / optional type and category columns; the date
+   format and decimal separator are detected from the data. Detection picks
+   the format that parses the *most* rows, so one bad date can't mislabel a
+   whole file, and it flags day/month ambiguity (all days ≤ 12) for the user
+   to confirm. A live preview shows the result of every choice.
+3. **Review** — `POST /api/transactions/import/check` returns rows that
+   match an existing transaction (same day, type, amount to the cent and
+   description, case/whitespace-insensitive); those start unticked, so
+   re-importing a statement doesn't double-count. Category names from the
+   file are matched to the user's categories; unmatched rows need a fallback
+   category per type (no silent default) or a per-row pick.
+
+`POST /api/transactions/import` then validates every row (ISO date,
+positive amount, category owned by the user and of the same type) and
+inserts them in one MongoDB transaction — all or nothing — with
+`source: "import"`. Up to 5,000 rows per request; that route alone gets a
+2 MB JSON limit instead of the default 100 KB.
+
 ## Data model decisions
 
 - **Reference, don't embed, for `Transaction`**: transactions reference

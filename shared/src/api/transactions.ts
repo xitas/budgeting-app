@@ -1,4 +1,4 @@
-import type { TransactionType } from "../index";
+import type { TransactionSource, TransactionType } from "../index";
 
 export interface TransactionCategoryRef {
   id: string;
@@ -14,7 +14,7 @@ export interface Transaction {
   type: TransactionType;
   description: string;
   date: string;
-  source: "manual" | "recurring" | "loan";
+  source: TransactionSource;
 }
 
 export interface TransactionFilters {
@@ -43,3 +43,14 @@ export interface CreateTransactionInput {
 }
 
 export type UpdateTransactionInput = Partial<CreateTransactionInput>;
+
+// CSV import: rows arrive already parsed and mapped by the client.
+export interface ImportTransactionRow {
+  date: string; // YYYY-MM-DD
+  type: TransactionType;
+  amount: number;
+  description: string;
+  category: string;
+}
+
+export type ImportCheckRow = Omit<ImportTransactionRow, "category">;

@@ -151,7 +151,7 @@ function TransactionRow({ tx, onPress }: { tx: Transaction; onPress: () => void 
         </Text>
         <Text style={styles.rowMeta} numberOfLines={1}>
           {tx.category.name} · {formatDisplayDate(tx.date)}
-          {tx.source === "recurring" ? " · recurring" : tx.source === "loan" ? " · loan" : ""}
+          {tx.source === "recurring" ? " · recurring" : tx.source === "loan" ? " · loan" : tx.source === "import" ? " · imported" : ""}
         </Text>
       </View>
       <Text style={[styles.amount, isIncome && styles.amountIncome]}>

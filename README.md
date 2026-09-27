@@ -165,9 +165,10 @@ data) and the client suite. Requires `npm run mongo:up` first.
 
 - [x] Dark mode (web + mobile: follows the system by default, with a System / Light / Dark switch)
 - [x] CSV export of transactions (respects the current filters; web download, mobile share sheet)
+- [x] CSV import (web): bank statements or this app's own export, with column mapping, date/number format detection, duplicate detection and a review step
 - [x] CI (GitHub Actions): lint, typecheck, builds, Android bundle, and the full test suite against a MongoDB replica set on every push/PR
 
-**Future work**: CSV import, full-data backup export, live deployment (needed before the mobile app is usable off the local network).
+**Future work**: CSV import on mobile, full-data backup export, live deployment (needed before the mobile app is usable off the local network).
 
 ## License
 

@@ -1,26 +1,14 @@
-import mongoose, { ClientSession } from "mongoose";
+import { ClientSession } from "mongoose";
 import { CATEGORICAL_PALETTE, type LoanDirection, type TransactionType } from "shared";
 import { Category, CategoryDocument } from "../models/Category";
 import { Loan, LoanDocument } from "../models/Loan";
 import { Transaction } from "../models/Transaction";
 import { AppError } from "../utils/AppError";
+import { withTransaction } from "../utils/withTransaction";
 import { AddRepaymentInput, CreateLoanInput, UpdateLoanInput } from "../validation/loan.validation";
 
 const LOAN_OUT_COLOR = CATEGORICAL_PALETTE[7]; // red — cash leaving you
 const LOAN_IN_COLOR = CATEGORICAL_PALETTE[2]; // aqua — cash entering you
-
-async function withTransaction<T>(fn: (session: ClientSession) => Promise<T>): Promise<T> {
-  const session = await mongoose.startSession();
-  try {
-    let result: T | undefined;
-    await session.withTransaction(async () => {
-      result = await fn(session);
-    });
-    return result as T;
-  } finally {
-    await session.endSession();
-  }
-}
 
 // "Loan Out"/"Loan In" represent cash-flow direction, not loan direction:
 // lending out and repaying a borrowed loan are both Loan Out; borrowing and

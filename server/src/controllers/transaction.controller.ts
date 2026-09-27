@@ -3,6 +3,8 @@ import * as transactionService from "../services/transaction.service";
 import {
   CreateTransactionInput,
   ExportTransactionsQuery,
+  ImportCheckRow,
+  ImportTransactionRow,
   ListTransactionsQuery,
   UpdateTransactionInput,
 } from "../validation/transaction.validation";
@@ -20,6 +22,18 @@ export async function exportTransactionsHandler(req: Request, res: Response): Pr
     .type("text/csv; charset=utf-8")
     .attachment(`transactions-${today}.csv`)
     .send(csv);
+}
+
+export async function checkImportHandler(req: Request, res: Response): Promise<void> {
+  const { rows } = req.body as { rows: ImportCheckRow[] };
+  const duplicates = await transactionService.findImportDuplicates(req.userId!, rows);
+  res.status(200).json({ duplicates });
+}
+
+export async function importTransactionsHandler(req: Request, res: Response): Promise<void> {
+  const { rows } = req.body as { rows: ImportTransactionRow[] };
+  const imported = await transactionService.importTransactions(req.userId!, rows);
+  res.status(201).json({ imported });
 }
 
 export async function createTransactionHandler(req: Request, res: Response): Promise<void> {

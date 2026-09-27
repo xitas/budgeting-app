@@ -28,7 +28,7 @@ const transactionSchema = new Schema<ITransaction, TransactionModel>(
     type: { type: String, enum: ["income", "expense"], required: true },
     description: { type: String, trim: true, default: "" },
     date: { type: Date, required: true },
-    source: { type: String, enum: ["manual", "recurring", "loan"], default: "manual" },
+    source: { type: String, enum: ["manual", "recurring", "loan", "import"], default: "manual" },
     recurringSourceId: { type: Schema.Types.ObjectId, ref: "RecurringTransaction" },
     loanSourceId: { type: Schema.Types.ObjectId, ref: "Loan" },
   },

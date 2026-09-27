@@ -21,6 +21,9 @@ export function createApp(): Express {
 
   app.use(helmet());
   app.use(cors({ origin: env.CLIENT_ORIGIN, credentials: true }));
+  // Imports send up to MAX_IMPORT_ROWS rows in one request — more than the
+  // default 100kb. Scoped to that path; everything else keeps the default.
+  app.use("/api/transactions/import", express.json({ limit: "2mb" }));
   app.use(express.json());
   app.use(cookieParser());
   if (env.NODE_ENV === "development") {

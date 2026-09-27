@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 import { z } from "zod";
 import { Field } from "../../components/ui/Field";
 import { buttonClass, ghostButtonClass, inputClass } from "../../components/ui/formStyles";
@@ -215,15 +216,20 @@ export function TransactionsPanel() {
           />
         </label>
         <div className="ml-auto flex flex-col items-end">
-          <button
-            type="button"
-            onClick={() => void handleExport()}
-            disabled={isExporting}
-            title="Download the transactions matching these filters as a CSV file"
-            className={ghostButtonClass}
-          >
-            {isExporting ? "Exporting..." : "Export CSV"}
-          </button>
+          <div className="flex gap-2">
+            <Link to="/import" className={ghostButtonClass} title="Add transactions from a bank or app CSV file">
+              Import CSV
+            </Link>
+            <button
+              type="button"
+              onClick={() => void handleExport()}
+              disabled={isExporting}
+              title="Download the transactions matching these filters as a CSV file"
+              className={ghostButtonClass}
+            >
+              {isExporting ? "Exporting..." : "Export CSV"}
+            </button>
+          </div>
           {exportError && <span className="mt-1 text-xs text-red-600">{exportError}</span>}
         </div>
       </div>

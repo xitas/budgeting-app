@@ -1,12 +1,15 @@
-import { FilterQuery } from "mongoose";
+import { FilterQuery, Types } from "mongoose";
 import { Category } from "../models/Category";
 import { ITransaction, Transaction, TransactionDocument } from "../models/Transaction";
 import { runDueForUser } from "./recurring.service";
 import { AppError } from "../utils/AppError";
 import { toCsv } from "../utils/csv";
+import { withTransaction } from "../utils/withTransaction";
 import {
   CreateTransactionInput,
   ExportTransactionsQuery,
+  ImportCheckRow,
+  ImportTransactionRow,
   ListTransactionsQuery,
   UpdateTransactionInput,
 } from "../validation/transaction.validation";
@@ -141,4 +144,66 @@ export async function exportTransactionsCsv(userId: string, query: ExportTransac
     tx.source,
   ]);
   return toCsv(CSV_HEADERS, rows);
+}
+
+// Two rows are "the same transaction" when day, type, amount (to the cent)
+// and description (case/whitespace-insensitive) all match — what a bank
+// statement re-imported, or this app's own export imported back, looks like.
+function duplicateKey(isoDay: string, type: string, amount: number, description: string): string {
+  return [isoDay, type, Math.round(amount * 100), description.trim().replace(/\s+/g, " ").toLowerCase()].join("|");
+}
+
+// Returns the indexes of rows that match an existing transaction, so the
+// import preview can untick them. Only reads the date span the file covers.
+export async function findImportDuplicates(userId: string, rows: ImportCheckRow[]): Promise<number[]> {
+  const days = rows.map((r) => r.date).sort();
+  const from = new Date(days[0]);
+  const toExclusive = new Date(new Date(days[days.length - 1]).getTime() + 24 * 60 * 60 * 1000);
+
+  const existing = await Transaction.find(
+    { user: userId, date: { $gte: from, $lt: toExclusive } },
+    "date type amount description"
+  ).lean();
+  const keys = new Set(
+    existing.map((tx) => duplicateKey(tx.date.toISOString().slice(0, 10), tx.type, tx.amount, tx.description ?? ""))
+  );
+
+  return rows.flatMap((r, i) => (keys.has(duplicateKey(r.date, r.type, r.amount, r.description ?? "")) ? [i] : []));
+}
+
+// All-or-nothing: every row is validated up front, then inserted in one
+// MongoDB transaction, so a failed import never leaves half a statement.
+export async function importTransactions(userId: string, rows: ImportTransactionRow[]): Promise<number> {
+  const categoryIds = [...new Set(rows.map((r) => r.category))];
+  const invalidId = categoryIds.find((id) => !Types.ObjectId.isValid(id));
+  if (invalidId) {
+    throw new AppError(400, `Unknown category: ${invalidId}`);
+  }
+
+  const categories = await Category.find({ _id: { $in: categoryIds }, user: userId }, "type").lean();
+  const typeById = new Map(categories.map((c) => [c._id.toString(), c.type]));
+
+  rows.forEach((row, i) => {
+    const categoryType = typeById.get(row.category);
+    if (!categoryType) {
+      throw new AppError(400, `Row ${i + 1}: unknown category`);
+    }
+    // Categories are typed; an income filed under an expense category would
+    // skew every chart that groups by category.
+    if (categoryType !== row.type) {
+      throw new AppError(400, `Row ${i + 1}: an ${row.type} can't use an ${categoryType} category`);
+    }
+  });
+
+  const docs = rows.map((row) => ({
+    user: userId,
+    category: row.category,
+    type: row.type,
+    amount: row.amount,
+    description: row.description ?? "",
+    date: new Date(row.date),
+    source: "import" as const,
+  }));
+  await withTransaction((session) => Transaction.insertMany(docs, { session }));
+  return docs.length;
 }

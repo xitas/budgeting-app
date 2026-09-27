@@ -1,6 +1,6 @@
 export type TransactionType = "income" | "expense";
 
-export type TransactionSource = "manual" | "recurring" | "loan";
+export type TransactionSource = "manual" | "recurring" | "loan" | "import";
 
 export type LoanDirection = "lent" | "borrowed";
 
