@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# A newer push to the same branch/PR supersedes the run in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24
+
+jobs:
+  checks:
+    name: Lint, typecheck & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      # postinstall builds the shared package, which every workspace imports.
+      - run: npm ci
+
+      # server: tsc --noEmit · client: oxlint · mobile: tsc --noEmit
+      - run: npm run lint
+
+      # shared + server (tsc) + client (tsc -b && vite build)
+      - run: npm run build
+
+      # Bundles the Expo app's JavaScript for Android — catches broken
+      # imports and routes that the typecheck alone can't see.
+      - name: Bundle mobile app (Android)
+        working-directory: mobile
+        run: npx expo export --platform android --output-dir "$RUNNER_TEMP/expo-export"
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Loans write a Loan + Transaction atomically (withTransaction), which
+      # needs a replica set — same as the local docker-compose setup, minus auth.
+      TEST_MONGO_URI: mongodb://localhost:27017/budget-app-test?directConnection=true
+      # The server validates these at import time; tests never use the
+      # values beyond signing their own tokens.
+      MONGO_URI: mongodb://localhost:27017/unused
+      CLIENT_ORIGIN: http://localhost:5173
+      JWT_ACCESS_SECRET: ci-access-secret
+      JWT_REFRESH_SECRET: ci-refresh-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start MongoDB (single-node replica set)
+        run: |
+          docker run -d --name mongo -p 27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in $(seq 1 30); do
+            docker exec mongo mongosh --quiet --eval "db.adminCommand('ping').ok" >/dev/null 2>&1 && break
+            sleep 1
+          done
+          docker exec mongo mongosh --quiet --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'localhost:27017'}]})"
+          for i in $(seq 1 30); do
+            [ "$(docker exec mongo mongosh --quiet --eval 'db.hello().isWritablePrimary')" = "true" ] && exit 0
+            sleep 1
+          done
+          echo "MongoDB replica set never became primary" && docker logs mongo && exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      # server (Vitest + Supertest against Mongo) · client · mobile
+      - run: npm test

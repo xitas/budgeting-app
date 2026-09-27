@@ -1,5 +1,6 @@
 # Budget App
 
+[![CI](https://github.com/xitas/budgeting-app/actions/workflows/ci.yml/badge.svg)](https://github.com/xitas/budgeting-app/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)
@@ -164,8 +165,9 @@ data) and the client suite. Requires `npm run mongo:up` first.
 
 - [x] Dark mode (web + mobile: follows the system by default, with a System / Light / Dark switch)
 - [x] CSV export of transactions (respects the current filters; web download, mobile share sheet)
+- [x] CI (GitHub Actions): lint, typecheck, builds, Android bundle, and the full test suite against a MongoDB replica set on every push/PR
 
-**Future work**: CSV import, full-data backup export, CI (GitHub Actions), live deployment (needed before the mobile app is usable off the local network).
+**Future work**: CSV import, full-data backup export, live deployment (needed before the mobile app is usable off the local network).
 
 ## License
 
