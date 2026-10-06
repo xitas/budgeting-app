@@ -1,8 +1,8 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { StyleSheet, Text } from "react-native";
+import { centsToDecimalString, formatMoney } from "shared";
 import { z } from "zod";
 import { Button } from "../../../components/ui/Button";
 import { DateField } from "../../../components/ui/DateField";
@@ -13,14 +13,16 @@ import { type Colors } from "../../../components/ui/theme";
 import { useAddRepayment, useLoans } from "../../../features/loans/hooks";
 import { todayIso } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { amountField, zodFormResolver } from "../../../lib/money";
 import { useThemedStyles } from "../../../context/ThemeContext";
 
 const addRepaymentSchema = z.object({
-  amount: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Amount must be greater than 0"),
+  amountCents: amountField("Amount"),
   date: z.string().min(1, "Date is required"),
   note: z.string().optional(),
 });
-type AddRepaymentFormValues = z.infer<typeof addRepaymentSchema>;
+type AddRepaymentFormInput = z.input<typeof addRepaymentSchema>; // amount as typed text
+type AddRepaymentFormValues = z.output<typeof addRepaymentSchema>; // amount in cents
 
 export default function AddRepaymentScreen() {
   const styles = useThemedStyles(makeStyles);
@@ -33,10 +35,10 @@ export default function AddRepaymentScreen() {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<AddRepaymentFormValues>({
-    resolver: zodResolver(addRepaymentSchema),
+  } = useForm<AddRepaymentFormInput, unknown, AddRepaymentFormValues>({
+    resolver: zodFormResolver(addRepaymentSchema),
     // Suggest paying off whatever is left.
-    defaultValues: { date: todayIso(), amount: loan && loan.outstanding > 0 ? loan.outstanding : undefined },
+    defaultValues: { date: todayIso(), amountCents: loan && loan.outstandingCents > 0 ? centsToDecimalString(loan.outstandingCents) : undefined },
   });
 
   async function onSubmit(values: AddRepaymentFormValues): Promise<void> {
@@ -54,10 +56,10 @@ export default function AddRepaymentScreen() {
       {loan ? (
         <Text style={styles.context}>
           {loan.direction === "lent" ? `${loan.counterparty} paying you back` : `You paying back ${loan.counterparty}`} ·{" "}
-          {loan.outstanding.toFixed(2)} outstanding
+          {formatMoney(loan.outstandingCents)} outstanding
         </Text>
       ) : null}
-      <FormField control={control} name="amount" label="Amount" keyboardType="decimal-pad" placeholder="0.00" error={errors.amount?.message} />
+      <FormField control={control} name="amountCents" label="Amount" keyboardType="decimal-pad" placeholder="0.00" error={errors.amountCents?.message} />
       <Controller
         control={control}
         name="date"

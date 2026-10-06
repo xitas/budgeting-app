@@ -3,8 +3,10 @@ import { StyleSheet, Text, TextInput, View, type TextInputProps } from "react-na
 import { radius, type Colors } from "./theme";
 import { useColors, useThemedStyles } from "../../context/ThemeContext";
 
-interface FormFieldProps<T extends FieldValues> extends Omit<TextInputProps, "value" | "onChangeText" | "onBlur"> {
-  control: Control<T>;
+// TOut: what the form submits, when its schema transforms values (e.g. an
+// amount typed as text that validates into cents).
+interface FormFieldProps<T extends FieldValues, TOut extends FieldValues = T> extends Omit<TextInputProps, "value" | "onChangeText" | "onBlur"> {
+  control: Control<T, any, TOut>;
   name: Path<T>;
   label: string;
   error?: string;
@@ -12,7 +14,7 @@ interface FormFieldProps<T extends FieldValues> extends Omit<TextInputProps, "va
 
 // react-hook-form's register() targets DOM inputs; React Native inputs go
 // through Controller instead.
-export function FormField<T extends FieldValues>({ control, name, label, error, style, ...inputProps }: FormFieldProps<T>) {
+export function FormField<T extends FieldValues, TOut extends FieldValues = T>({ control, name, label, error, style, ...inputProps }: FormFieldProps<T, TOut>) {
   const styles = useThemedStyles(makeStyles);
   const colors = useColors();
   return (

@@ -17,8 +17,8 @@ function percentOf(value: number, max: number): number {
 export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) {
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
-  const total = data.reduce((sum, row) => sum + row.amount, 0);
-  const max = Math.max(...data.map((row) => row.amount), 0);
+  const total = data.reduce((sum, row) => sum + row.amountCents, 0);
+  const max = Math.max(...data.map((row) => row.amountCents), 0);
 
   return (
     <ChartCard
@@ -26,7 +26,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
       tableView={
         <DataTable
           headers={["Category", "Spent", "Share"]}
-          rows={data.map((row) => [row.name, formatAmount(row.amount), `${total ? Math.round((row.amount / total) * 100) : 0}%`])}
+          rows={data.map((row) => [row.name, formatAmount(row.amountCents), `${total ? Math.round((row.amountCents / total) * 100) : 0}%`])}
         />
       }
     >
@@ -39,7 +39,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
               key={row.categoryId}
               style={styles.row}
               accessible
-              accessibilityLabel={`${row.name}: ${formatAmount(row.amount)}`}
+              accessibilityLabel={`${row.name}: ${formatAmount(row.amountCents)}`}
             >
               <View style={styles.labelRow}>
                 <View style={[styles.dot, { backgroundColor: schemeColor(row.color) }]} />
@@ -48,8 +48,8 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
                 </Text>
               </View>
               <View style={styles.track}>
-                <View style={[styles.bar, { width: `${percentOf(row.amount, max)}%`, backgroundColor: schemeColor(row.color) }]} />
-                <Text style={[styles.value, { left: `${percentOf(row.amount, max)}%` }]}>{formatAmount(row.amount)}</Text>
+                <View style={[styles.bar, { width: `${percentOf(row.amountCents, max)}%`, backgroundColor: schemeColor(row.color) }]} />
+                <Text style={[styles.value, { left: `${percentOf(row.amountCents, max)}%` }]}>{formatAmount(row.amountCents)}</Text>
               </View>
             </View>
           ))}

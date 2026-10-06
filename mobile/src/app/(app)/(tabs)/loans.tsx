@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
-import type { Loan } from "shared";
+import { formatMoney, type Loan } from "shared";
 import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../../components/ui/layout";
 import { Meter } from "../../../components/ui/Meter";
 import { radius, type Colors } from "../../../components/ui/theme";
@@ -55,13 +55,13 @@ function LoanCard({ loan, onPress }: { loan: Loan; onPress: () => void }) {
         </Text>
         <Text style={styles.direction}>{loan.direction === "lent" ? "You lent" : "You borrowed"}</Text>
       </View>
-      <Meter value={loan.repaid} max={loan.principal} color={schemeColor(loanColor(loan))} />
+      <Meter value={loan.repaidCents} max={loan.principalCents} color={schemeColor(loanColor(loan))} />
       <View style={styles.footer}>
         <Text style={styles.meta}>
           {describeLoanState(loan)} · {formatDisplayDate(loan.date)}
         </Text>
         <Text style={styles.amounts}>
-          {loan.repaid.toFixed(2)} / {loan.principal.toFixed(2)}
+          {formatMoney(loan.repaidCents)} / {formatMoney(loan.principalCents)}
         </Text>
       </View>
     </Pressable>

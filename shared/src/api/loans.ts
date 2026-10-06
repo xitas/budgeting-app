@@ -1,8 +1,9 @@
 import type { LoanDirection, LoanStatus } from "../index";
+import type { Cents } from "../money";
 
 export interface Repayment {
   id: string;
-  amount: number;
+  amountCents: Cents;
   date: string;
   note?: string;
   transactionId: string;
@@ -12,34 +13,34 @@ export interface Loan {
   id: string;
   counterparty: string;
   direction: LoanDirection;
-  principal: number;
+  principalCents: Cents;
   description: string;
   date: string;
   writtenOff: boolean;
   repayments: Repayment[];
-  repaid: number;
-  outstanding: number;
+  repaidCents: Cents;
+  outstandingCents: Cents;
   status: LoanStatus;
 }
 
 export interface CreateLoanInput {
   counterparty: string;
   direction: LoanDirection;
-  principal: number;
+  principalCents: Cents;
   description?: string;
   date: string;
 }
 
 export interface UpdateLoanInput {
   counterparty?: string;
-  principal?: number;
+  principalCents?: Cents;
   description?: string;
   date?: string;
   writtenOff?: boolean;
 }
 
 export interface AddRepaymentInput {
-  amount: number;
+  amountCents: Cents;
   date: string;
   note?: string;
 }

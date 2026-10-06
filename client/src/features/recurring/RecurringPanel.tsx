@@ -1,7 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import type { RecurringFrequency, RecurringTransaction, UpdateRecurringInput } from "shared";
+import { centsToDecimalString, formatMoney, type RecurringFrequency, type RecurringTransaction, type UpdateRecurringInput } from "shared";
 import { z } from "zod";
 import { Field } from "../../components/ui/Field";
 import { buttonClass, inputClass } from "../../components/ui/formStyles";
@@ -10,6 +9,8 @@ import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { formatDisplayDate } from "../../lib/formatDate";
 import { extractErrorMessage } from "../../lib/errors";
+import { zodFormResolver } from "../../lib/zodFormResolver";
+import { amountField, parseAmountDraft } from "../../lib/money";
 import { useCategories } from "../categories/hooks";
 import { useCreateRecurring, useDeleteRecurring, useRecurring, useRunRecurringNow, useUpdateRecurring } from "./hooks";
 import { useSchemeColor } from "../../context/ThemeContext";
@@ -17,7 +18,7 @@ import { useSchemeColor } from "../../context/ThemeContext";
 const createRecurringSchema = z.object({
   category: z.string().min(1, "Category is required"),
   type: z.enum(["income", "expense"]),
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amountCents: amountField("Amount"),
   description: z.string().optional(),
   frequency: z.enum(["daily", "weekly", "monthly"]),
   interval: z.coerce.number().int().positive().default(1),
@@ -25,7 +26,8 @@ const createRecurringSchema = z.object({
   endDate: z.string().optional(),
 });
 
-type CreateRecurringFormValues = z.infer<typeof createRecurringSchema>;
+type CreateRecurringFormInput = z.input<typeof createRecurringSchema>;
+type CreateRecurringFormValues = z.output<typeof createRecurringSchema>;
 
 function describeFrequency(frequency: RecurringFrequency, interval: number): string {
   const unit = frequency === "daily" ? "day" : frequency === "weekly" ? "week" : "month";
@@ -44,8 +46,8 @@ function AddRecurringForm({ onSuccess }: { onSuccess: () => void }) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateRecurringFormValues>({
-    resolver: zodResolver(createRecurringSchema),
+  } = useForm<CreateRecurringFormInput, unknown, CreateRecurringFormValues>({
+    resolver: zodFormResolver(createRecurringSchema),
     defaultValues: { type: "expense", frequency: "monthly", interval: 1, startDate: todayIso() },
   });
 
@@ -78,8 +80,8 @@ function AddRecurringForm({ onSuccess }: { onSuccess: () => void }) {
             ))}
           </select>
         </Field>
-        <Field label="Amount" error={errors.amount?.message}>
-          <input type="number" step="0.01" className={inputClass} {...register("amount")} />
+        <Field label="Amount" error={errors.amountCents?.message}>
+          <input type="text" inputMode="decimal" className={inputClass} {...register("amountCents")} />
         </Field>
         <Field label="Frequency" error={errors.frequency?.message}>
           <select className={inputClass} {...register("frequency")}>
@@ -118,13 +120,15 @@ export function RecurringPanel() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<UpdateRecurringInput>({});
+  const [draftAmount, setDraftAmount] = useState(""); // the typed text
   const [editError, setEditError] = useState<string | null>(null);
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
   const [runMessages, setRunMessages] = useState<Record<string, string>>({});
 
   function startEdit(r: RecurringTransaction): void {
     setEditingId(r.id);
-    setDraft({ amount: r.amount, description: r.description, endDate: r.endDate ?? null, isActive: r.isActive });
+    setDraft({ description: r.description, endDate: r.endDate ?? null, isActive: r.isActive });
+    setDraftAmount(centsToDecimalString(r.amountCents));
     setEditError(null);
   }
 
@@ -136,9 +140,14 @@ export function RecurringPanel() {
 
   async function saveEdit(): Promise<void> {
     if (!editingId) return;
+    const amount = parseAmountDraft("Amount", draftAmount);
+    if ("error" in amount) {
+      setEditError(amount.error);
+      return;
+    }
     setEditError(null);
     try {
-      await updateRecurring.mutateAsync({ id: editingId, updates: draft });
+      await updateRecurring.mutateAsync({ id: editingId, updates: { ...draft, amountCents: amount.cents } });
       setEditingId(null);
       setDraft({});
     } catch (err) {
@@ -207,14 +216,15 @@ export function RecurringPanel() {
                       {r.type === "income" ? "+" : "-"}
                       {isEditing ? (
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
+                          inputMode="decimal"
+                          aria-label="Amount"
                           className={`${inputClass} ml-1 inline w-20 py-1`}
-                          value={draft.amount ?? ""}
-                          onChange={(e) => setDraft((prev) => ({ ...prev, amount: Number(e.target.value) }))}
+                          value={draftAmount}
+                          onChange={(e) => setDraftAmount(e.target.value)}
                         />
                       ) : (
-                        r.amount.toFixed(2)
+                        formatMoney(r.amountCents)
                       )}
                     </span>
                   </div>

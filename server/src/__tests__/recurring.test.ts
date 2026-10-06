@@ -32,7 +32,7 @@ describe("recurring transaction generation", () => {
     const recurring = await RecurringTransaction.create({
       user: user._id,
       category: category._id,
-      amount: 50,
+      amountCents: 5000,
       type: "income",
       description: "test",
       frequency: "daily",
@@ -60,7 +60,7 @@ describe("recurring transaction generation", () => {
     const recurring = await RecurringTransaction.create({
       user: user._id,
       category: category._id,
-      amount: 200,
+      amountCents: 20000,
       type: "income",
       description: "",
       frequency: "weekly",
@@ -84,7 +84,7 @@ describe("recurring transaction generation", () => {
     const recurring = await RecurringTransaction.create({
       user: user._id,
       category: category._id,
-      amount: 50,
+      amountCents: 5000,
       type: "income",
       description: "",
       frequency: "daily",

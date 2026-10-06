@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
-import type { RecurringTransaction } from "shared";
+import { formatSignedAmount, type RecurringTransaction } from "shared";
 import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../components/ui/layout";
 import { radius, type Colors } from "../../components/ui/theme";
 import { describeFrequency } from "../../features/recurring/describe";
@@ -86,8 +86,7 @@ function RecurringCard({ rule, runMessage, onPress, onRunNow }: RecurringCardPro
             {!rule.isActive ? <Text style={styles.paused}> (paused)</Text> : null}
           </Text>
           <Text style={[styles.amount, isIncome && styles.amountIncome]}>
-            {isIncome ? "+" : "-"}
-            {rule.amount.toFixed(2)}
+            {formatSignedAmount(rule.amountCents, rule.type)}
           </Text>
         </View>
         <Text style={styles.meta}>

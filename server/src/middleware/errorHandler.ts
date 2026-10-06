@@ -20,6 +20,9 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     console.error(`[error] ${req.method} ${req.originalUrl}`, err);
   }
 
+  if (err instanceof AppError && err.headers) {
+    res.set(err.headers);
+  }
   res.status(statusCode).json({
     message,
     ...(env.NODE_ENV === "development" && err instanceof Error ? { stack: err.stack } : {}),

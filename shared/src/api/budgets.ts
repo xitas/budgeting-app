@@ -1,3 +1,5 @@
+import type { Cents } from "../money";
+
 export interface BudgetCategoryRef {
   id: string;
   name: string;
@@ -7,20 +9,20 @@ export interface BudgetCategoryRef {
 export interface Budget {
   id: string;
   category: BudgetCategoryRef;
-  limit: number;
+  limitCents: Cents;
   month: number;
   year: number;
-  spent: number;
-  remaining: number;
+  spentCents: Cents;
+  remainingCents: Cents;
 }
 
 export interface CreateBudgetInput {
   category: string;
-  limit: number;
+  limitCents: Cents;
   month: number;
   year: number;
 }
 
 export interface UpdateBudgetInput {
-  limit: number;
+  limitCents: Cents;
 }

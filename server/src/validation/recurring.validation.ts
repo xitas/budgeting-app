@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { positiveCents } from "./money";
 
 export const createRecurringSchema = z.object({
   body: z.object({
     category: z.string().min(1, "Category is required"),
-    amount: z.coerce.number().positive("Amount must be greater than 0"),
+    amountCents: positiveCents("Amount"),
     type: z.enum(["income", "expense"]),
     description: z.string().optional().default(""),
     frequency: z.enum(["daily", "weekly", "monthly"]),
@@ -19,7 +20,7 @@ export const createRecurringSchema = z.object({
 export const updateRecurringSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
-    amount: z.coerce.number().positive().optional(),
+    amountCents: positiveCents("Amount").optional(),
     description: z.string().optional(),
     endDate: z.coerce.date().nullable().optional(),
     isActive: z.boolean().optional(),

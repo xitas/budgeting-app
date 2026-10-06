@@ -85,7 +85,7 @@ export function ImportPage() {
       const valid = parsed.filter((r) => !r.error);
       const duplicateIdx = valid.length
         ? await checkImportDuplicates(
-            valid.map((r) => ({ date: r.date!, type: r.type!, amount: r.amount!, description: r.description }))
+            valid.map((r) => ({ date: r.date!, type: r.type!, amountCents: r.amountCents!, description: r.description }))
           )
         : [];
       const duplicateLines = new Set(duplicateIdx.map((i) => valid[i].line));
@@ -119,7 +119,7 @@ export function ImportPage() {
           .map((r) => ({
             date: r.date!,
             type: r.type!,
-            amount: r.amount!,
+            amountCents: r.amountCents!,
             description: r.description,
             category: effectiveCategory(r, fallback),
           }))

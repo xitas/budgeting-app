@@ -1,9 +1,8 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { StyleSheet, Text, View } from "react-native";
-import type { Budget } from "shared";
+import { centsToDecimalString, formatMoney, type Budget } from "shared";
 import { z } from "zod";
 import { Button } from "../../../components/ui/Button";
 import { FormField } from "../../../components/ui/FormField";
@@ -14,12 +13,14 @@ import { useBudgets, useDeleteBudget, useUpdateBudget } from "../../../features/
 import { confirmDestructive } from "../../../lib/confirm";
 import { MONTH_NAMES } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { amountField, zodFormResolver } from "../../../lib/money";
 import { useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
 
 const editBudgetSchema = z.object({
-  limit: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Limit must be greater than 0"),
+  limitCents: amountField("Limit"),
 });
-type EditBudgetFormValues = z.infer<typeof editBudgetSchema>;
+type EditBudgetFormInput = z.input<typeof editBudgetSchema>; // amount as typed text
+type EditBudgetFormValues = z.output<typeof editBudgetSchema>; // amount in cents
 
 export default function EditBudgetScreen() {
   const params = useLocalSearchParams<{ id: string; month: string; year: string }>();
@@ -42,7 +43,7 @@ function EditBudgetForm({ budget }: { budget: Budget }) {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<EditBudgetFormValues>({ resolver: zodResolver(editBudgetSchema), defaultValues: { limit: budget.limit } });
+  } = useForm<EditBudgetFormInput, unknown, EditBudgetFormValues>({ resolver: zodFormResolver(editBudgetSchema), defaultValues: { limitCents: centsToDecimalString(budget.limitCents) } });
 
   async function onSubmit(values: EditBudgetFormValues): Promise<void> {
     setFormError(null);
@@ -72,9 +73,9 @@ function EditBudgetForm({ budget }: { budget: Budget }) {
         <Text style={styles.name}>{budget.category.name}</Text>
       </View>
       <Text style={styles.context}>
-        {MONTH_NAMES[budget.month - 1]} {budget.year} · spent {budget.spent.toFixed(2)} so far
+        {MONTH_NAMES[budget.month - 1]} {budget.year} · spent {formatMoney(budget.spentCents)} so far
       </Text>
-      <FormField control={control} name="limit" label="Monthly limit" keyboardType="decimal-pad" error={errors.limit?.message} />
+      <FormField control={control} name="limitCents" label="Monthly limit" keyboardType="decimal-pad" error={errors.limitCents?.message} />
       {formError ? <Notice tone="error">{formError}</Notice> : null}
       <Button title={isSubmitting ? "Saving..." : "Save changes"} disabled={isSubmitting} onPress={() => void handleSubmit(onSubmit)()} />
       <Button title="Delete budget" variant="ghost" onPress={() => void handleDelete()} disabled={deleteBudget.isPending} />

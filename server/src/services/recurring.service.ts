@@ -9,7 +9,7 @@ import { CreateRecurringInput, UpdateRecurringInput } from "../validation/recurr
 interface GeneratedTransactionRow {
   user: Types.ObjectId;
   category: Types.ObjectId;
-  amount: number;
+  amountCents: number;
   type: TransactionType;
   description: string;
   date: Date;
@@ -53,7 +53,7 @@ export async function generateDueTransactions(recurring: RecurringTransactionDoc
     rows.push({
       user: recurring.user,
       category: recurring.category,
-      amount: recurring.amount,
+      amountCents: recurring.amountCents,
       type: recurring.type,
       description: recurring.description,
       date: cursor,

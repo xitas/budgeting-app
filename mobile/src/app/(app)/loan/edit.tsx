@@ -1,9 +1,8 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { StyleSheet, Switch, Text, View } from "react-native";
-import type { Loan } from "shared";
+import { centsToDecimalString, type Loan } from "shared";
 import { z } from "zod";
 import { Button } from "../../../components/ui/Button";
 import { DateField } from "../../../components/ui/DateField";
@@ -13,18 +12,20 @@ import { Notice } from "../../../components/ui/Notice";
 import { type Colors } from "../../../components/ui/theme";
 import { useLoans, useUpdateLoan } from "../../../features/loans/hooks";
 import { extractErrorMessage } from "../../../lib/errors";
+import { amountField, zodFormResolver } from "../../../lib/money";
 import { useColors, useThemedStyles } from "../../../context/ThemeContext";
 
 // Direction isn't editable: flipping it would invert the cash flow of the
 // loan's already-recorded transaction (the server rejects it too).
 const editLoanSchema = z.object({
   counterparty: z.string().trim().min(1, "Counterparty is required"),
-  principal: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Principal must be greater than 0"),
+  principalCents: amountField("Principal"),
   description: z.string().optional(),
   date: z.string().min(1, "Date is required"),
   writtenOff: z.boolean(),
 });
-type EditLoanFormValues = z.infer<typeof editLoanSchema>;
+type EditLoanFormInput = z.input<typeof editLoanSchema>; // amount as typed text
+type EditLoanFormValues = z.output<typeof editLoanSchema>; // amount in cents
 
 export default function EditLoanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -46,11 +47,11 @@ function EditLoanForm({ loan }: { loan: Loan }) {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<EditLoanFormValues>({
-    resolver: zodResolver(editLoanSchema),
+  } = useForm<EditLoanFormInput, unknown, EditLoanFormValues>({
+    resolver: zodFormResolver(editLoanSchema),
     defaultValues: {
       counterparty: loan.counterparty,
-      principal: loan.principal,
+      principalCents: centsToDecimalString(loan.principalCents),
       description: loan.description,
       date: loan.date.slice(0, 10),
       writtenOff: loan.writtenOff,
@@ -72,7 +73,7 @@ function EditLoanForm({ loan }: { loan: Loan }) {
   return (
     <FormScreen>
       <FormField control={control} name="counterparty" label="Counterparty" error={errors.counterparty?.message} />
-      <FormField control={control} name="principal" label="Principal" keyboardType="decimal-pad" error={errors.principal?.message} />
+      <FormField control={control} name="principalCents" label="Principal" keyboardType="decimal-pad" error={errors.principalCents?.message} />
       <Controller
         control={control}
         name="date"

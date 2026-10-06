@@ -54,6 +54,9 @@ export function schemeColor(hex: string, scheme: ColorScheme): string {
   return slot === -1 ? hex : CATEGORICAL_PALETTE_DARK[slot];
 }
 
+// Money: integer cents everywhere, plus the shared parse/format helpers.
+export * from "./money";
+
 // API request/response shapes, shared by the web client and the mobile app.
 export * from "./api/auth";
 export * from "./api/budgets";

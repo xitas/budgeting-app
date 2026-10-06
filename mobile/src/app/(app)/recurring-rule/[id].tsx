@@ -1,9 +1,8 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { StyleSheet, Switch, Text, View } from "react-native";
-import type { RecurringTransaction } from "shared";
+import { centsToDecimalString, type RecurringTransaction } from "shared";
 import { z } from "zod";
 import { Button } from "../../../components/ui/Button";
 import { DateField } from "../../../components/ui/DateField";
@@ -16,17 +15,19 @@ import { useDeleteRecurring, useRecurring, useUpdateRecurring } from "../../../f
 import { confirmDestructive } from "../../../lib/confirm";
 import { formatDisplayDate } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { amountField, zodFormResolver } from "../../../lib/money";
 import { useColors, useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
 
 // Category, type, frequency, interval and start date are fixed after
 // creation (the server rejects changes) — delete and recreate instead.
 const editRecurringSchema = z.object({
-  amount: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Amount must be greater than 0"),
+  amountCents: amountField("Amount"),
   description: z.string().optional(),
   endDate: z.string().optional(),
   isActive: z.boolean(),
 });
-type EditRecurringFormValues = z.infer<typeof editRecurringSchema>;
+type EditRecurringFormInput = z.input<typeof editRecurringSchema>; // amount as typed text
+type EditRecurringFormValues = z.output<typeof editRecurringSchema>; // amount in cents
 
 export default function EditRecurringScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -50,10 +51,10 @@ function EditRecurringForm({ rule }: { rule: RecurringTransaction }) {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<EditRecurringFormValues>({
-    resolver: zodResolver(editRecurringSchema),
+  } = useForm<EditRecurringFormInput, unknown, EditRecurringFormValues>({
+    resolver: zodFormResolver(editRecurringSchema),
     defaultValues: {
-      amount: rule.amount,
+      amountCents: centsToDecimalString(rule.amountCents),
       description: rule.description,
       endDate: rule.endDate?.slice(0, 10) ?? "",
       isActive: rule.isActive,
@@ -96,7 +97,7 @@ function EditRecurringForm({ rule }: { rule: RecurringTransaction }) {
         {rule.type === "income" ? "Income" : "Expense"} · {describeFrequency(rule.frequency, rule.interval)} · started{" "}
         {formatDisplayDate(rule.startDate)}
       </Text>
-      <FormField control={control} name="amount" label="Amount" keyboardType="decimal-pad" error={errors.amount?.message} />
+      <FormField control={control} name="amountCents" label="Amount" keyboardType="decimal-pad" error={errors.amountCents?.message} />
       <FormField control={control} name="description" label="Description (optional)" error={errors.description?.message} />
       <Controller
         control={control}

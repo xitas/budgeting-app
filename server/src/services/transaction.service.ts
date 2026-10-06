@@ -1,4 +1,5 @@
 import { FilterQuery, Types } from "mongoose";
+import { centsToDecimalString } from "shared";
 import { Category } from "../models/Category";
 import { ITransaction, Transaction, TransactionDocument } from "../models/Transaction";
 import { runDueForUser } from "./recurring.service";
@@ -140,17 +141,17 @@ export async function exportTransactionsCsv(userId: string, query: ExportTransac
     tx.type,
     tx.category?.name ?? "",
     tx.description ?? "",
-    tx.amount,
+    centsToDecimalString(tx.amountCents), // CSV keeps normal decimals: 1250.50
     tx.source,
   ]);
   return toCsv(CSV_HEADERS, rows);
 }
 
-// Two rows are "the same transaction" when day, type, amount (to the cent)
+// Two rows are "the same transaction" when day, type, amount (in cents)
 // and description (case/whitespace-insensitive) all match — what a bank
 // statement re-imported, or this app's own export imported back, looks like.
-function duplicateKey(isoDay: string, type: string, amount: number, description: string): string {
-  return [isoDay, type, Math.round(amount * 100), description.trim().replace(/\s+/g, " ").toLowerCase()].join("|");
+function duplicateKey(isoDay: string, type: string, amountCents: number, description: string): string {
+  return [isoDay, type, amountCents, description.trim().replace(/\s+/g, " ").toLowerCase()].join("|");
 }
 
 // Returns the indexes of rows that match an existing transaction, so the
@@ -162,13 +163,13 @@ export async function findImportDuplicates(userId: string, rows: ImportCheckRow[
 
   const existing = await Transaction.find(
     { user: userId, date: { $gte: from, $lt: toExclusive } },
-    "date type amount description"
+    "date type amountCents description"
   ).lean();
   const keys = new Set(
-    existing.map((tx) => duplicateKey(tx.date.toISOString().slice(0, 10), tx.type, tx.amount, tx.description ?? ""))
+    existing.map((tx) => duplicateKey(tx.date.toISOString().slice(0, 10), tx.type, tx.amountCents, tx.description ?? ""))
   );
 
-  return rows.flatMap((r, i) => (keys.has(duplicateKey(r.date, r.type, r.amount, r.description ?? "")) ? [i] : []));
+  return rows.flatMap((r, i) => (keys.has(duplicateKey(r.date, r.type, r.amountCents, r.description ?? "")) ? [i] : []));
 }
 
 // All-or-nothing: every row is validated up front, then inserted in one
@@ -199,7 +200,7 @@ export async function importTransactions(userId: string, rows: ImportTransaction
     user: userId,
     category: row.category,
     type: row.type,
-    amount: row.amount,
+    amountCents: row.amountCents,
     description: row.description ?? "",
     date: new Date(row.date),
     source: "import" as const,

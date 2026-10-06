@@ -9,11 +9,11 @@ import { CreateBudgetInput, UpdateBudgetInput } from "../validation/budget.valid
 export interface BudgetWithSpent {
   id: string;
   category: { id: string; name: string; color: string };
-  limit: number;
+  limitCents: number;
   month: number;
   year: number;
-  spent: number;
-  remaining: number;
+  spentCents: number;
+  remainingCents: number;
 }
 
 interface PopulatedCategory {
@@ -35,7 +35,7 @@ async function getSpentByCategory(userId: string, month: number, year: number): 
 
   const results = await Transaction.aggregate<{ _id: Types.ObjectId; spent: number }>([
     { $match: { user: new Types.ObjectId(userId), type: "expense", date: { $gte: start, $lt: end } } },
-    { $group: { _id: "$category", spent: { $sum: "$amount" } } },
+    { $group: { _id: "$category", spent: { $sum: "$amountCents" } } },
   ]);
 
   return new Map(results.map((r) => [r._id.toString(), r.spent]));
@@ -57,11 +57,11 @@ export async function listBudgets(userId: string, month?: number, year?: number)
     return {
       id: b.id,
       category: { id: b.category._id.toString(), name: b.category.name, color: b.category.color },
-      limit: b.limit,
+      limitCents: b.limitCents,
       month: b.month,
       year: b.year,
-      spent,
-      remaining: b.limit - spent,
+      spentCents: spent,
+      remainingCents: b.limitCents - spent,
     };
   });
 }

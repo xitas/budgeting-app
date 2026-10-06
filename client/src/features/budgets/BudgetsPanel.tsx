@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,9 +8,11 @@ import { InlineEditActions } from "../../components/ui/InlineEditActions";
 import { Modal } from "../../components/ui/Modal";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { extractErrorMessage } from "../../lib/errors";
+import { zodFormResolver } from "../../lib/zodFormResolver";
+import { amountField, parseAmountDraft } from "../../lib/money";
 import { useCategories } from "../categories/hooks";
 import { useBudgets, useCreateBudget, useDeleteBudget, useUpdateBudget } from "./hooks";
-import type { Budget } from "shared";
+import { centsToDecimalString, formatMoney, parseAmountInput, type Budget } from "shared";
 import { useSchemeColor } from "../../context/ThemeContext";
 
 const MONTH_NAMES = [
@@ -31,10 +32,11 @@ const MONTH_NAMES = [
 
 const budgetFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
-  limit: z.coerce.number().positive("Limit must be greater than 0"),
+  limitCents: amountField("Limit"),
 });
 
-type BudgetFormValues = z.infer<typeof budgetFormSchema>;
+type BudgetFormInput = z.input<typeof budgetFormSchema>;
+type BudgetFormValues = z.output<typeof budgetFormSchema>;
 
 function AddBudgetForm({
   month,
@@ -53,7 +55,7 @@ function AddBudgetForm({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<BudgetFormValues>({ resolver: zodResolver(budgetFormSchema) });
+  } = useForm<BudgetFormInput, unknown, BudgetFormValues>({ resolver: zodFormResolver(budgetFormSchema) });
 
   async function onSubmit(values: BudgetFormValues): Promise<void> {
     setFormError(null);
@@ -77,8 +79,8 @@ function AddBudgetForm({
           ))}
         </select>
       </Field>
-      <Field label="Monthly limit" error={errors.limit?.message}>
-        <input type="number" step="0.01" className={inputClass} {...register("limit")} />
+      <Field label="Monthly limit" error={errors.limitCents?.message}>
+        <input type="text" inputMode="decimal" className={inputClass} {...register("limitCents")} />
       </Field>
       {formError && <p className="text-sm text-red-600">{formError}</p>}
       <button type="submit" disabled={isSubmitting} className={`${buttonClass} w-full`}>
@@ -95,7 +97,7 @@ export function BudgetsPanel() {
   const [year, setYear] = useState(now.getFullYear());
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftLimit, setDraftLimit] = useState<number | "">("");
+  const [draftLimit, setDraftLimit] = useState(""); // the typed text, e.g. "250.00"
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
 
@@ -126,7 +128,7 @@ export function BudgetsPanel() {
 
   function startEdit(budget: Budget): void {
     setEditingId(budget.id);
-    setDraftLimit(budget.limit);
+    setDraftLimit(centsToDecimalString(budget.limitCents));
     setEditError(null);
   }
 
@@ -137,10 +139,15 @@ export function BudgetsPanel() {
   }
 
   async function saveEdit(): Promise<void> {
-    if (!editingId || draftLimit === "") return;
+    if (!editingId) return;
+    const parsed = parseAmountDraft("Limit", draftLimit);
+    if ("error" in parsed) {
+      setEditError(parsed.error);
+      return;
+    }
     setEditError(null);
     try {
-      await updateBudget.mutateAsync({ id: editingId, updates: { limit: Number(draftLimit) } });
+      await updateBudget.mutateAsync({ id: editingId, updates: { limitCents: parsed.cents } });
       setEditingId(null);
       setDraftLimit("");
     } catch (err) {
@@ -193,7 +200,7 @@ export function BudgetsPanel() {
           <ul>
             {budgets.map((b) => {
               const isEditing = b.id === editingId;
-              const overBudget = b.spent > b.limit;
+              const overBudget = b.spentCents > b.limitCents;
               return (
                 <li
                   key={b.id}
@@ -208,26 +215,27 @@ export function BudgetsPanel() {
                     </span>
                     {isEditing ? (
                       <span className="flex items-center gap-1">
-                        {b.spent.toFixed(2)} /
+                        {formatMoney(b.spentCents)} /
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
+                          inputMode="decimal"
+                          aria-label="Monthly limit"
                           autoFocus
                           className={`${inputClass} w-24 py-1`}
                           value={draftLimit}
-                          onChange={(e) => setDraftLimit(e.target.value === "" ? "" : Number(e.target.value))}
+                          onChange={(e) => setDraftLimit(e.target.value)}
                         />
                       </span>
                     ) : (
                       <span className={overBudget ? "text-red-600" : "text-slate-600"}>
-                        {b.spent.toFixed(2)} / {b.limit.toFixed(2)}
+                        {formatMoney(b.spentCents)} / {formatMoney(b.limitCents)}
                       </span>
                     )}
                   </div>
-                  <ProgressBar value={b.spent} max={isEditing && draftLimit !== "" ? Number(draftLimit) : b.limit} color={schemeColor(b.category.color)} />
+                  <ProgressBar value={b.spentCents} max={isEditing ? (parseAmountInput(draftLimit) ?? b.limitCents) : b.limitCents} color={schemeColor(b.category.color)} />
                   <div className="mt-1 flex items-center justify-between text-xs">
                     <span className={overBudget ? "text-red-600" : "text-slate-400"}>
-                      {overBudget ? `Over by ${(b.spent - b.limit).toFixed(2)}` : `${b.remaining.toFixed(2)} remaining`}
+                      {overBudget ? `Over by ${formatMoney(b.spentCents - b.limitCents)}` : `${formatMoney(b.remainingCents)} remaining`}
                     </span>
                     {isEditing ? (
                       <InlineEditActions onSave={() => void saveEdit()} onCancel={cancelEdit} isSaving={updateBudget.isPending} />

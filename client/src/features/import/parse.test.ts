@@ -5,7 +5,7 @@ import {
   detectDecimalSeparator,
   detectDelimiter,
   guessMapping,
-  parseAmount,
+  parseAmountCents,
   parseCsv,
   parseDate,
   type ParseOptions,
@@ -65,15 +65,29 @@ describe("dates", () => {
 
 describe("amounts", () => {
   it("parses dot- and comma-decimal amounts with currency, thousands and negatives", () => {
-    expect(parseAmount("1,234.56", ".")).toBe(1234.56);
-    expect(parseAmount("-£45.00", ".")).toBe(-45);
-    expect(parseAmount("(45.00)", ".")).toBe(-45);
-    expect(parseAmount("45.00-", ".")).toBe(-45);
-    expect(parseAmount("USD 12", ".")).toBe(12);
-    expect(parseAmount("1.234,56", ",")).toBe(1234.56);
-    expect(parseAmount("-12,50 €", ",")).toBe(-12.5);
-    expect(parseAmount("", ".")).toBeNull();
-    expect(parseAmount("n/a", ".")).toBeNull();
+    expect(parseAmountCents("1,234.56", ".")).toBe(123456);
+    expect(parseAmountCents("-£45.00", ".")).toBe(-4500);
+    expect(parseAmountCents("(45.00)", ".")).toBe(-4500);
+    expect(parseAmountCents("45.00-", ".")).toBe(-4500);
+    expect(parseAmountCents("USD 12", ".")).toBe(1200);
+    expect(parseAmountCents("1.234,56", ",")).toBe(123456);
+    expect(parseAmountCents("-12,50 €", ",")).toBe(-1250);
+    expect(parseAmountCents("", ".")).toBeNull();
+    expect(parseAmountCents("n/a", ".")).toBeNull();
+  });
+
+  it("converts to cents exactly, without float error", () => {
+    // Number("0.29") * 100 is 28.999999999999996 — must still be 29.
+    expect(parseAmountCents("0.29", ".")).toBe(29);
+    expect(parseAmountCents("1.15", ".")).toBe(115);
+    expect(parseAmountCents("1250.50", ".")).toBe(125050);
+    expect(parseAmountCents("1250,5", ",")).toBe(125050);
+  });
+
+  it("rounds amounts with more than 2 decimals half up", () => {
+    expect(parseAmountCents("10.005", ".")).toBe(1001);
+    expect(parseAmountCents("10.004", ".")).toBe(1000);
+    expect(parseAmountCents("-2.675", ".")).toBe(-268);
   });
 
   it("detects the decimal separator from samples", () => {
@@ -93,8 +107,8 @@ describe("guessMapping + buildRows", () => {
     expect(mapping).toMatchObject({ date: 0, type: 1, category: 2, description: 3, amountMode: "signed", amount: 4 });
 
     expect(buildRows(data, mapping, dot)).toEqual([
-      { line: 2, date: "2026-07-01", type: "income", amount: 3000, description: "July pay", categoryName: "Salary", error: null },
-      { line: 3, date: "2026-07-02", type: "expense", amount: 42.5, description: "Weekly shop, big", categoryName: "Groceries", error: null },
+      { line: 2, date: "2026-07-01", type: "income", amountCents: 300000, description: "July pay", categoryName: "Salary", error: null },
+      { line: 3, date: "2026-07-02", type: "expense", amountCents: 4250, description: "Weekly shop, big", categoryName: "Groceries", error: null },
     ]);
   });
 
@@ -104,9 +118,9 @@ describe("guessMapping + buildRows", () => {
     const options: ParseOptions = { dateFormat: "DD/MM/YYYY", decimal: ".", invertSigns: false };
 
     const rows = buildRows(data, mapping, options);
-    expect(rows.map((r) => [r.date, r.type, r.amount, r.description])).toEqual([
-      ["2026-07-01", "expense", 42.5, "TESCO"],
-      ["2026-07-02", "income", 3000, "SALARY"],
+    expect(rows.map((r) => [r.date, r.type, r.amountCents, r.description])).toEqual([
+      ["2026-07-01", "expense", 4250, "TESCO"],
+      ["2026-07-02", "income", 300000, "SALARY"],
     ]);
 
     const inverted = buildRows(data, mapping, { ...options, invertSigns: true });
@@ -119,9 +133,9 @@ describe("guessMapping + buildRows", () => {
     expect(mapping.amountMode).toBe("debitCredit");
 
     const rows = buildRows(data, mapping, { dateFormat: "YYYY-MM-DD", decimal: ",", invertSigns: false });
-    expect(rows.map((r) => [r.type, r.amount])).toEqual([
-      ["expense", 1200],
-      ["income", 12.5],
+    expect(rows.map((r) => [r.type, r.amountCents])).toEqual([
+      ["expense", 120000],
+      ["income", 1250],
     ]);
   });
 

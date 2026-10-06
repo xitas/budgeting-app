@@ -67,7 +67,7 @@ export async function createLoan(userId: string, input: CreateLoanInput): Promis
       user: userId,
       counterparty: input.counterparty,
       direction: input.direction,
-      principal: input.principal,
+      principalCents: input.principalCents,
       description: input.description,
       date: input.date,
       writtenOff: false,
@@ -79,7 +79,7 @@ export async function createLoan(userId: string, input: CreateLoanInput): Promis
         {
           user: userId,
           category: category._id,
-          amount: input.principal,
+          amountCents: input.principalCents,
           type,
           description: describeLoanTransaction(input.direction, input.counterparty, false, input.description),
           date: input.date,
@@ -104,13 +104,13 @@ export async function updateLoan(userId: string, loanId: string, updates: Update
     }
 
     const transactionFieldsChanged =
-      updates.principal !== undefined ||
+      updates.principalCents !== undefined ||
       updates.description !== undefined ||
       updates.date !== undefined ||
       updates.counterparty !== undefined;
 
     if (updates.counterparty !== undefined) loan.counterparty = updates.counterparty;
-    if (updates.principal !== undefined) loan.principal = updates.principal;
+    if (updates.principalCents !== undefined) loan.principalCents = updates.principalCents;
     if (updates.description !== undefined) loan.description = updates.description;
     if (updates.date !== undefined) loan.date = updates.date;
     if (updates.writtenOff !== undefined) loan.writtenOff = updates.writtenOff;
@@ -118,7 +118,7 @@ export async function updateLoan(userId: string, loanId: string, updates: Update
     if (transactionFieldsChanged) {
       const transaction = await Transaction.findById(loan.transactionId).session(session);
       if (transaction) {
-        if (updates.principal !== undefined) transaction.amount = updates.principal;
+        if (updates.principalCents !== undefined) transaction.amountCents = updates.principalCents;
         if (updates.date !== undefined) transaction.date = updates.date;
         transaction.description = describeLoanTransaction(loan.direction, loan.counterparty, false, loan.description);
         await transaction.save({ session });
@@ -158,7 +158,7 @@ export async function addRepayment(userId: string, loanId: string, input: AddRep
         {
           user: userId,
           category: category._id,
-          amount: input.amount,
+          amountCents: input.amountCents,
           type,
           description: describeLoanTransaction(loan.direction, loan.counterparty, true, input.note),
           date: input.date,
@@ -169,7 +169,7 @@ export async function addRepayment(userId: string, loanId: string, input: AddRep
       { session }
     );
 
-    loan.repayments.push({ amount: input.amount, date: input.date, note: input.note, transactionId: transaction._id });
+    loan.repayments.push({ amountCents: input.amountCents, date: input.date, note: input.note, transactionId: transaction._id });
     await loan.save({ session });
     return loan;
   });

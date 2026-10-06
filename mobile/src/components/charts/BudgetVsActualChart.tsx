@@ -21,9 +21,9 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
           headers={["Category", "Spent", "Limit", "Used"]}
           rows={data.map((b) => [
             b.category.name,
-            formatAmount(b.spent),
-            formatAmount(b.limit),
-            `${b.limit ? Math.round((b.spent / b.limit) * 100) : 0}%`,
+            formatAmount(b.spentCents),
+            formatAmount(b.limitCents),
+            `${b.limitCents ? Math.round((b.spentCents / b.limitCents) * 100) : 0}%`,
           ])}
         />
       }
@@ -33,7 +33,7 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
       ) : (
         <View style={styles.rows}>
           {data.map((b) => {
-            const over = b.remaining < 0;
+            const over = b.remainingCents < 0;
             return (
               <View key={b.id} style={styles.row}>
                 <View style={styles.header}>
@@ -42,11 +42,11 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
                     {b.category.name}
                   </Text>
                   <Text style={styles.amounts}>
-                    {formatAmount(b.spent)} / {formatAmount(b.limit)}
+                    {formatAmount(b.spentCents)} / {formatAmount(b.limitCents)}
                   </Text>
                 </View>
-                <Meter value={b.spent} max={b.limit} color={schemeColor(b.category.color)} overColor={colors.danger} />
-                {over ? <Text style={styles.over}>Over by {formatAmount(Math.abs(b.remaining))}</Text> : null}
+                <Meter value={b.spentCents} max={b.limitCents} color={schemeColor(b.category.color)} overColor={colors.danger} />
+                {over ? <Text style={styles.over}>Over by {formatAmount(Math.abs(b.remainingCents))}</Text> : null}
               </View>
             );
           })}

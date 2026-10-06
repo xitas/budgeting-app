@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { positiveCents } from "./money";
 
 export const listTransactionsSchema = z.object({
   query: z.object({
@@ -26,7 +27,7 @@ export const exportTransactionsSchema = z.object({
 export const MAX_IMPORT_ROWS = 5000;
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD");
-const importAmount = z.number().positive("Amount must be greater than 0");
+const importAmount = positiveCents("Amount");
 
 // Duplicate check: no category yet (the user may still be choosing them).
 export const importCheckSchema = z.object({
@@ -36,7 +37,7 @@ export const importCheckSchema = z.object({
         z.object({
           date: isoDate,
           type: z.enum(["income", "expense"]),
-          amount: importAmount,
+          amountCents: importAmount,
           description: z.string().max(500).optional().default(""),
         })
       )
@@ -52,7 +53,7 @@ export const importTransactionsSchema = z.object({
         z.object({
           date: isoDate,
           type: z.enum(["income", "expense"]),
-          amount: importAmount,
+          amountCents: importAmount,
           description: z.string().max(500).optional().default(""),
           category: z.string().min(1, "Category is required"),
         })
@@ -65,7 +66,7 @@ export const importTransactionsSchema = z.object({
 export const createTransactionSchema = z.object({
   body: z.object({
     category: z.string().min(1, "Category is required"),
-    amount: z.coerce.number().positive("Amount must be greater than 0"),
+    amountCents: positiveCents("Amount"),
     type: z.enum(["income", "expense"]),
     description: z.string().optional().default(""),
     date: z.coerce.date(),
@@ -76,7 +77,7 @@ export const updateTransactionSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
     category: z.string().min(1).optional(),
-    amount: z.coerce.number().positive().optional(),
+    amountCents: positiveCents("Amount").optional(),
     type: z.enum(["income", "expense"]).optional(),
     description: z.string().optional(),
     date: z.coerce.date().optional(),

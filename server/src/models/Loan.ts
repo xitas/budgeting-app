@@ -1,8 +1,9 @@
 import { HydratedDocument, Model, Schema, Types, model } from "mongoose";
 import type { LoanDirection, LoanStatus } from "shared";
+import { wholeCents } from "./money";
 
 export interface IRepayment {
-  amount: number;
+  amountCents: number;
   date: Date;
   note?: string;
   transactionId: Types.ObjectId; // the Transaction this repayment created
@@ -12,7 +13,7 @@ export interface ILoan {
   user: Types.ObjectId;
   counterparty: string; // free text — the other person isn't necessarily an app user
   direction: LoanDirection; // immutable after creation
-  principal: number;
+  principalCents: number;
   description: string;
   date: Date;
   transactionId: Types.ObjectId; // the linked initial Transaction
@@ -21,8 +22,8 @@ export interface ILoan {
 }
 
 interface ILoanVirtuals {
-  repaid: number;
-  outstanding: number;
+  repaidCents: number;
+  outstandingCents: number;
   status: LoanStatus;
 }
 
@@ -32,7 +33,7 @@ type LoanModel = Model<ILoan, {}, {}, ILoanVirtuals>;
 
 const repaymentSchema = new Schema<IRepayment>(
   {
-    amount: { type: Number, required: true, min: 0 },
+    amountCents: { type: Number, required: true, min: 0, validate: wholeCents },
     date: { type: Date, required: true },
     note: { type: String, trim: true },
     transactionId: { type: Schema.Types.ObjectId, ref: "Transaction", required: true },
@@ -57,7 +58,7 @@ const loanSchema = new Schema<ILoan, LoanModel>(
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     counterparty: { type: String, required: true, trim: true },
     direction: { type: String, enum: ["lent", "borrowed"], required: true },
-    principal: { type: Number, required: true, min: 0 },
+    principalCents: { type: Number, required: true, min: 0, validate: wholeCents },
     description: { type: String, trim: true, default: "" },
     date: { type: Date, required: true },
     transactionId: { type: Schema.Types.ObjectId, ref: "Transaction", required: true },
@@ -73,22 +74,22 @@ loanSchema.index({ user: 1, date: -1 });
 // array — no aggregation needed, since embedding means the data is already
 // in memory once the parent loads (contrast with Budget.spent, which needs
 // an aggregation because its spend data lives in a separate collection).
-loanSchema.virtual("repaid").get(function (this: LoanDocument) {
-  return this.repayments.reduce((sum, r) => sum + r.amount, 0);
+loanSchema.virtual("repaidCents").get(function (this: LoanDocument) {
+  return this.repayments.reduce((sum, r) => sum + r.amountCents, 0);
 });
 
-loanSchema.virtual("outstanding").get(function (this: LoanDocument) {
+loanSchema.virtual("outstandingCents").get(function (this: LoanDocument) {
   if (this.writtenOff) {
     return 0;
   }
-  return this.principal - this.repaid;
+  return this.principalCents - this.repaidCents;
 });
 
 loanSchema.virtual("status").get(function (this: LoanDocument): LoanStatus {
   if (this.writtenOff) {
     return "written_off";
   }
-  if (this.outstanding <= 0) {
+  if (this.outstandingCents <= 0) {
     return "settled";
   }
   return "open";

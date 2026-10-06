@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -10,25 +9,29 @@ import { Modal } from "../../components/ui/Modal";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import { formatDisplayDate } from "../../lib/formatDate";
 import { extractErrorMessage } from "../../lib/errors";
+import { zodFormResolver } from "../../lib/zodFormResolver";
+import { amountField, parseAmountDraft } from "../../lib/money";
 import { useAddRepayment, useCreateLoan, useDeleteLoan, useLoans, useRemoveRepayment, useUpdateLoan } from "./hooks";
-import { CATEGORICAL_PALETTE, type Loan, type UpdateLoanInput } from "shared";
+import { CATEGORICAL_PALETTE, centsToDecimalString, formatMoney, parseAmountInput, type Loan, type UpdateLoanInput } from "shared";
 import { useSchemeColor } from "../../context/ThemeContext";
 
 const createLoanSchema = z.object({
   counterparty: z.string().min(1, "Counterparty is required"),
   direction: z.enum(["lent", "borrowed"]),
-  principal: z.coerce.number().positive("Principal must be greater than 0"),
+  principalCents: amountField("Principal"),
   description: z.string().optional(),
   date: z.string().min(1, "Date is required"),
 });
-type CreateLoanFormValues = z.infer<typeof createLoanSchema>;
+type CreateLoanFormInput = z.input<typeof createLoanSchema>;
+type CreateLoanFormValues = z.output<typeof createLoanSchema>;
 
 const addRepaymentSchema = z.object({
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amountCents: amountField("Amount"),
   date: z.string().min(1, "Date is required"),
   note: z.string().optional(),
 });
-type AddRepaymentFormValues = z.infer<typeof addRepaymentSchema>;
+type AddRepaymentFormInput = z.input<typeof addRepaymentSchema>;
+type AddRepaymentFormValues = z.output<typeof addRepaymentSchema>;
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -38,13 +41,13 @@ function describeLoanState(loan: Loan): string {
   if (loan.status === "written_off") {
     return loan.direction === "lent" ? "Written off" : "Forgiven";
   }
-  if (loan.outstanding < 0) {
-    return `Overpaid by ${Math.abs(loan.outstanding).toFixed(2)}`;
+  if (loan.outstandingCents < 0) {
+    return `Overpaid by ${formatMoney(loan.outstandingCents, { sign: "never" })}`;
   }
-  if (loan.outstanding === 0) {
+  if (loan.outstandingCents === 0) {
     return "Settled";
   }
-  return `${loan.outstanding.toFixed(2)} remaining`;
+  return `${formatMoney(loan.outstandingCents)} remaining`;
 }
 
 function AddLoanForm({ onSuccess }: { onSuccess: () => void }) {
@@ -54,8 +57,8 @@ function AddLoanForm({ onSuccess }: { onSuccess: () => void }) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateLoanFormValues>({
-    resolver: zodResolver(createLoanSchema),
+  } = useForm<CreateLoanFormInput, unknown, CreateLoanFormValues>({
+    resolver: zodFormResolver(createLoanSchema),
     defaultValues: { direction: "lent", date: todayIso() },
   });
 
@@ -81,8 +84,8 @@ function AddLoanForm({ onSuccess }: { onSuccess: () => void }) {
             <option value="borrowed">I borrowed money</option>
           </select>
         </Field>
-        <Field label="Principal" error={errors.principal?.message}>
-          <input type="number" step="0.01" className={inputClass} {...register("principal")} />
+        <Field label="Principal" error={errors.principalCents?.message}>
+          <input type="text" inputMode="decimal" className={inputClass} {...register("principalCents")} />
         </Field>
         <Field label="Date" error={errors.date?.message}>
           <input type="date" className={inputClass} {...register("date")} />
@@ -106,8 +109,8 @@ function AddRepaymentForm({ loanId, onSuccess }: { loanId: string; onSuccess: ()
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<AddRepaymentFormValues>({
-    resolver: zodResolver(addRepaymentSchema),
+  } = useForm<AddRepaymentFormInput, unknown, AddRepaymentFormValues>({
+    resolver: zodFormResolver(addRepaymentSchema),
     defaultValues: { date: todayIso() },
   });
 
@@ -124,8 +127,8 @@ function AddRepaymentForm({ loanId, onSuccess }: { loanId: string; onSuccess: ()
   return (
     <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Amount" error={errors.amount?.message}>
-          <input type="number" step="0.01" className={inputClass} {...register("amount")} />
+        <Field label="Amount" error={errors.amountCents?.message}>
+          <input type="text" inputMode="decimal" className={inputClass} {...register("amountCents")} />
         </Field>
         <Field label="Date" error={errors.date?.message}>
           <input type="date" className={inputClass} {...register("date")} />
@@ -154,6 +157,7 @@ export function LoansPanel() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<UpdateLoanInput>({});
+  const [draftPrincipal, setDraftPrincipal] = useState(""); // the typed text
   const [editError, setEditError] = useState<string | null>(null);
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({});
 
@@ -173,11 +177,11 @@ export function LoansPanel() {
     setEditingId(loan.id);
     setDraft({
       counterparty: loan.counterparty,
-      principal: loan.principal,
       description: loan.description,
       date: loan.date.slice(0, 10),
       writtenOff: loan.writtenOff,
     });
+    setDraftPrincipal(centsToDecimalString(loan.principalCents));
     setEditError(null);
   }
 
@@ -189,9 +193,14 @@ export function LoansPanel() {
 
   async function saveEdit(): Promise<void> {
     if (!editingId) return;
+    const principal = parseAmountDraft("Principal", draftPrincipal);
+    if ("error" in principal) {
+      setEditError(principal.error);
+      return;
+    }
     setEditError(null);
     try {
-      await updateLoan.mutateAsync({ id: editingId, updates: draft });
+      await updateLoan.mutateAsync({ id: editingId, updates: { ...draft, principalCents: principal.cents } });
       setEditingId(null);
       setDraft({});
     } catch (err) {
@@ -269,23 +278,24 @@ export function LoansPanel() {
                         </>
                       )}
                     </span>
-                    <span className={loan.outstanding < 0 ? "text-red-600" : "text-slate-900"}>
-                      {loan.repaid.toFixed(2)} /{" "}
+                    <span className={loan.outstandingCents < 0 ? "text-red-600" : "text-slate-900"}>
+                      {formatMoney(loan.repaidCents)} /{" "}
                       {isEditing ? (
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
+                          inputMode="decimal"
+                          aria-label="Principal"
                           className={`${inputClass} ml-1 inline w-24 py-1`}
-                          value={draft.principal ?? ""}
-                          onChange={(e) => setDraft((prev) => ({ ...prev, principal: Number(e.target.value) }))}
+                          value={draftPrincipal}
+                          onChange={(e) => setDraftPrincipal(e.target.value)}
                         />
                       ) : (
-                        loan.principal.toFixed(2)
+                        formatMoney(loan.principalCents)
                       )}
                     </span>
                   </div>
 
-                  <ProgressBar value={loan.repaid} max={isEditing ? (draft.principal ?? loan.principal) : loan.principal} color={schemeColor(loan.direction === "lent" ? CATEGORICAL_PALETTE[2] : CATEGORICAL_PALETTE[1])} />
+                  <ProgressBar value={loan.repaidCents} max={isEditing ? (parseAmountInput(draftPrincipal) ?? loan.principalCents) : loan.principalCents} color={schemeColor(loan.direction === "lent" ? CATEGORICAL_PALETTE[2] : CATEGORICAL_PALETTE[1])} />
 
                   {isEditing ? (
                     <div className="mt-2 space-y-2">
@@ -365,7 +375,7 @@ export function LoansPanel() {
                           <li key={r.id}>
                             <div className="flex items-center justify-between text-xs text-slate-500">
                               <span>
-                                {formatDisplayDate(r.date)} — {r.amount.toFixed(2)}
+                                {formatDisplayDate(r.date)} — {formatMoney(r.amountCents)}
                                 {r.note && ` (${r.note})`}
                               </span>
                               <button

@@ -1,4 +1,4 @@
-import { CATEGORICAL_PALETTE, type Loan } from "shared";
+import { CATEGORICAL_PALETTE, formatMoney, type Loan } from "shared";
 
 // Same hues as the web Loans tab: lent = aqua, borrowed = orange.
 export const LENT_COLOR = CATEGORICAL_PALETTE[2];
@@ -12,11 +12,11 @@ export function describeLoanState(loan: Loan): string {
   if (loan.status === "written_off") {
     return loan.direction === "lent" ? "Written off" : "Forgiven";
   }
-  if (loan.outstanding < 0) {
-    return `Overpaid by ${Math.abs(loan.outstanding).toFixed(2)}`;
+  if (loan.outstandingCents < 0) {
+    return `Overpaid by ${formatMoney(loan.outstandingCents, { sign: "never" })}`;
   }
-  if (loan.outstanding === 0) {
+  if (loan.outstandingCents === 0) {
     return "Settled";
   }
-  return `${loan.outstanding.toFixed(2)} remaining`;
+  return `${formatMoney(loan.outstandingCents)} remaining`;
 }

@@ -1,5 +1,5 @@
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { BudgetVsActual } from "shared";
+import { centsToUnits, formatMoney, type BudgetVsActual } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
 import { useChartTheme } from "./chartTheme";
@@ -9,8 +9,8 @@ interface Row {
   name: string;
   color: string;
   percent: number;
-  spent: number;
-  limit: number;
+  spentCents: number;
+  limitCents: number;
 }
 
 export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
@@ -26,9 +26,9 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
   const chartData: Row[] = data.map((b) => ({
     name: b.category.name,
     color: theme.color(b.category.color),
-    percent: b.limit > 0 ? Math.round((b.spent / b.limit) * 100) : 0,
-    spent: b.spent,
-    limit: b.limit,
+    percent: b.limitCents > 0 ? Math.round((b.spentCents / b.limitCents) * 100) : 0,
+    spentCents: b.spentCents,
+    limitCents: b.limitCents,
   }));
 
   const tableView = (
@@ -49,8 +49,8 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
                 {row.name}
               </span>
             </td>
-            <td className="py-1.5 text-right">{row.spent.toFixed(2)}</td>
-            <td className="py-1.5 text-right">{row.limit.toFixed(2)}</td>
+            <td className="py-1.5 text-right">{formatMoney(row.spentCents)}</td>
+            <td className="py-1.5 text-right">{formatMoney(row.limitCents)}</td>
           </tr>
         ))}
       </tbody>
@@ -85,7 +85,7 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
                 <ChartTooltip
                   active={active}
                   label={label}
-                  payload={[{ value: row.spent, name: `Spent of ${row.limit.toFixed(2)} limit`, color: row.color }]}
+                  payload={[{ value: centsToUnits(row.spentCents), name: `Spent of ${formatMoney(row.limitCents)} limit`, color: row.color }]}
                 />
               );
             }}

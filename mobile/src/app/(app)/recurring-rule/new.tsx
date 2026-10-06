@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -15,18 +14,20 @@ import { useCategories } from "../../../features/categories/hooks";
 import { useCreateRecurring } from "../../../features/recurring/hooks";
 import { todayIso } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { amountField, zodFormResolver } from "../../../lib/money";
 
 const createRecurringSchema = z.object({
   type: z.enum(["income", "expense"]),
   category: z.string().min(1, "Category is required"),
-  amount: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Amount must be greater than 0"),
+  amountCents: amountField("Amount"),
   description: z.string().optional(),
   frequency: z.enum(["daily", "weekly", "monthly"]),
   interval: z.coerce.number({ invalid_type_error: "Enter a whole number" }).int("Enter a whole number").positive("Must be at least 1"),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().optional(),
 });
-type CreateRecurringFormValues = z.infer<typeof createRecurringSchema>;
+type CreateRecurringFormInput = z.input<typeof createRecurringSchema>; // amount as typed text
+type CreateRecurringFormValues = z.output<typeof createRecurringSchema>; // amount in cents
 
 const TYPE_OPTIONS: { value: TransactionType; label: string }[] = [
   { value: "expense", label: "Expense" },
@@ -49,8 +50,8 @@ export default function NewRecurringScreen() {
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<CreateRecurringFormValues>({
-    resolver: zodResolver(createRecurringSchema),
+  } = useForm<CreateRecurringFormInput, unknown, CreateRecurringFormValues>({
+    resolver: zodFormResolver(createRecurringSchema),
     defaultValues: { type: "expense", frequency: "monthly", interval: 1, startDate: todayIso() },
   });
   const type = watch("type");
@@ -95,7 +96,7 @@ export default function NewRecurringScreen() {
           />
         )}
       />
-      <FormField control={control} name="amount" label="Amount" keyboardType="decimal-pad" placeholder="0.00" error={errors.amount?.message} />
+      <FormField control={control} name="amountCents" label="Amount" keyboardType="decimal-pad" placeholder="0.00" error={errors.amountCents?.message} />
       <Controller
         control={control}
         name="frequency"

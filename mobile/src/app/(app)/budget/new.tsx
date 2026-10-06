@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -14,13 +13,15 @@ import { useBudgets, useCreateBudget } from "../../../features/budgets/hooks";
 import { useCategories } from "../../../features/categories/hooks";
 import { MONTH_NAMES } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { amountField, zodFormResolver } from "../../../lib/money";
 import { useThemedStyles } from "../../../context/ThemeContext";
 
 const budgetFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
-  limit: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Limit must be greater than 0"),
+  limitCents: amountField("Limit"),
 });
-type BudgetFormValues = z.infer<typeof budgetFormSchema>;
+type BudgetFormInput = z.input<typeof budgetFormSchema>; // amount as typed text
+type BudgetFormValues = z.output<typeof budgetFormSchema>; // amount in cents
 
 export default function NewBudgetScreen() {
   const styles = useThemedStyles(makeStyles);
@@ -35,7 +36,7 @@ export default function NewBudgetScreen() {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<BudgetFormValues>({ resolver: zodResolver(budgetFormSchema) });
+  } = useForm<BudgetFormInput, unknown, BudgetFormValues>({ resolver: zodFormResolver(budgetFormSchema) });
 
   // Budgets are expense-only, one per category per month.
   const budgeted = new Set(budgets?.map((b) => b.category.id));
@@ -70,7 +71,7 @@ export default function NewBudgetScreen() {
           />
         )}
       />
-      <FormField control={control} name="limit" label="Monthly limit" keyboardType="decimal-pad" placeholder="0.00" error={errors.limit?.message} />
+      <FormField control={control} name="limitCents" label="Monthly limit" keyboardType="decimal-pad" placeholder="0.00" error={errors.limitCents?.message} />
       {formError ? <Notice tone="error">{formError}</Notice> : null}
       <Button title={isSubmitting ? "Adding..." : "Add budget"} disabled={isSubmitting} onPress={() => void handleSubmit(onSubmit)()} />
     </FormScreen>

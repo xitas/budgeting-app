@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type { TransactionType } from "shared";
@@ -10,17 +9,21 @@ import { FormField } from "../../components/ui/FormField";
 import { Notice } from "../../components/ui/Notice";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { extractErrorMessage } from "../../lib/errors";
+import { amountField, zodFormResolver } from "../../lib/money";
 import { useCategories } from "../categories/hooks";
 
 const transactionFormSchema = z.object({
   type: z.enum(["income", "expense"]),
   category: z.string().min(1, "Category is required"),
-  amount: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Amount must be greater than 0"),
+  amountCents: amountField("Amount"),
   description: z.string().optional(),
   date: z.string().min(1, "Date is required"),
 });
 
-export type TransactionFormValues = z.infer<typeof transactionFormSchema>;
+// Input: what the form holds (amount as typed text). Values: what it submits
+// (amount in cents).
+export type TransactionFormInput = z.input<typeof transactionFormSchema>;
+export type TransactionFormValues = z.output<typeof transactionFormSchema>;
 
 const TYPE_OPTIONS: { value: TransactionType; label: string }[] = [
   { value: "expense", label: "Expense" },
@@ -28,7 +31,7 @@ const TYPE_OPTIONS: { value: TransactionType; label: string }[] = [
 ];
 
 interface TransactionFormProps {
-  defaultValues: Partial<TransactionFormValues>;
+  defaultValues: Partial<TransactionFormInput>;
   submitLabel: string;
   onSubmit: (values: TransactionFormValues) => Promise<void>;
 }
@@ -42,7 +45,7 @@ export function TransactionForm({ defaultValues, submitLabel, onSubmit }: Transa
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<TransactionFormValues>({ resolver: zodResolver(transactionFormSchema), defaultValues });
+  } = useForm<TransactionFormInput, unknown, TransactionFormValues>({ resolver: zodFormResolver(transactionFormSchema), defaultValues });
 
   const type = watch("type");
   // Only offer categories of the chosen type (the web form lists all of them).
@@ -89,7 +92,7 @@ export function TransactionForm({ defaultValues, submitLabel, onSubmit }: Transa
           />
         )}
       />
-      <FormField control={control} name="amount" label="Amount" error={errors.amount?.message} keyboardType="decimal-pad" placeholder="0.00" />
+      <FormField control={control} name="amountCents" label="Amount" error={errors.amountCents?.message} keyboardType="decimal-pad" placeholder="0.00" />
       <Controller
         control={control}
         name="date"

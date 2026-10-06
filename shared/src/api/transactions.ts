@@ -1,4 +1,5 @@
 import type { TransactionSource, TransactionType } from "../index";
+import type { Cents } from "../money";
 
 export interface TransactionCategoryRef {
   id: string;
@@ -10,7 +11,7 @@ export interface TransactionCategoryRef {
 export interface Transaction {
   id: string;
   category: TransactionCategoryRef;
-  amount: number;
+  amountCents: Cents;
   type: TransactionType;
   description: string;
   date: string;
@@ -36,7 +37,7 @@ export interface PaginatedTransactions {
 
 export interface CreateTransactionInput {
   category: string;
-  amount: number;
+  amountCents: Cents;
   type: TransactionType;
   description?: string;
   date: string;
@@ -48,7 +49,7 @@ export type UpdateTransactionInput = Partial<CreateTransactionInput>;
 export interface ImportTransactionRow {
   date: string; // YYYY-MM-DD
   type: TransactionType;
-  amount: number;
+  amountCents: Cents;
   description: string;
   category: string;
 }

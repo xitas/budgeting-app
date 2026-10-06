@@ -25,12 +25,12 @@ describe("transaction.service — loan-sourced guard", () => {
     const loan = await loanService.createLoan(user.id, {
       counterparty: "Alex",
       direction: "lent",
-      principal: 500,
+      principalCents: 50000,
       description: "",
       date: new Date("2026-06-01"),
     });
 
-    await expect(updateTransaction(user.id, loan.transactionId.toString(), { amount: 999 })).rejects.toMatchObject({
+    await expect(updateTransaction(user.id, loan.transactionId.toString(), { amountCents: 99900 })).rejects.toMatchObject({
       statusCode: 409,
     });
     await expect(deleteTransaction(user.id, loan.transactionId.toString())).rejects.toMatchObject({

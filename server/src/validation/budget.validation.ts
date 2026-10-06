@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { positiveCents } from "./money";
 
 export const listBudgetsSchema = z.object({
   query: z.object({
@@ -10,7 +11,7 @@ export const listBudgetsSchema = z.object({
 export const createBudgetSchema = z.object({
   body: z.object({
     category: z.string().min(1, "Category is required"),
-    limit: z.coerce.number().positive("Limit must be greater than 0"),
+    limitCents: positiveCents("Limit"),
     month: z.coerce.number().int().min(1).max(12),
     year: z.coerce.number().int().min(2000).max(2100),
   }),
@@ -19,7 +20,7 @@ export const createBudgetSchema = z.object({
 export const updateBudgetSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
-    limit: z.coerce.number().positive("Limit must be greater than 0"),
+    limitCents: positiveCents("Limit"),
   }),
 });
 

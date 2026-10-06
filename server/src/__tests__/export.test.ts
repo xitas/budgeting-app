@@ -61,8 +61,8 @@ describe("GET /api/transactions/export", () => {
     const { token, categories } = await signUp("export@example.com");
     const groceries = categories.find((c) => c.name === "Groceries")!;
     const salary = categories.find((c) => c.type === "income")!;
-    await addTransaction(token, { category: groceries.id, type: "expense", amount: 42.5, description: "Weekly shop, big", date: "2026-07-02" });
-    await addTransaction(token, { category: salary.id, type: "income", amount: 3000, description: "July pay", date: "2026-07-01" });
+    await addTransaction(token, { category: groceries.id, type: "expense", amountCents: 4250, description: "Weekly shop, big", date: "2026-07-02" });
+    await addTransaction(token, { category: salary.id, type: "income", amountCents: 300000, description: "July pay", date: "2026-07-01" });
 
     const res = await request(app).get("/api/transactions/export").set("Authorization", `Bearer ${token}`);
 
@@ -71,8 +71,8 @@ describe("GET /api/transactions/export", () => {
     expect(res.headers["content-disposition"]).toMatch(/^attachment; filename="transactions-\d{4}-\d{2}-\d{2}\.csv"$/);
     expect(csvLines(res.text)).toEqual([
       "Date,Type,Category,Description,Amount,Source",
-      `2026-07-01,income,${salary.name},July pay,3000,manual`,
-      '2026-07-02,expense,Groceries,"Weekly shop, big",42.5,manual',
+      `2026-07-01,income,${salary.name},July pay,3000.00,manual`,
+      '2026-07-02,expense,Groceries,"Weekly shop, big",42.50,manual',
     ]);
   });
 
@@ -80,9 +80,9 @@ describe("GET /api/transactions/export", () => {
     const { token, categories } = await signUp("filters@example.com");
     const groceries = categories.find((c) => c.name === "Groceries")!;
     const salary = categories.find((c) => c.type === "income")!;
-    await addTransaction(token, { category: groceries.id, type: "expense", amount: 10, date: "2026-06-15" });
-    await addTransaction(token, { category: groceries.id, type: "expense", amount: 20, date: "2026-07-15" });
-    await addTransaction(token, { category: salary.id, type: "income", amount: 3000, date: "2026-07-01" });
+    await addTransaction(token, { category: groceries.id, type: "expense", amountCents: 1000, date: "2026-06-15" });
+    await addTransaction(token, { category: groceries.id, type: "expense", amountCents: 2000, date: "2026-07-15" });
+    await addTransaction(token, { category: salary.id, type: "income", amountCents: 300000, date: "2026-07-01" });
 
     const res = await request(app)
       .get("/api/transactions/export")
@@ -91,14 +91,14 @@ describe("GET /api/transactions/export", () => {
 
     const lines = csvLines(res.text);
     expect(lines).toHaveLength(2);
-    expect(lines[1]).toBe("2026-07-15,expense,Groceries,,20,manual");
+    expect(lines[1]).toBe("2026-07-15,expense,Groceries,,20.00,manual");
   });
 
   it("never includes another user's transactions", async () => {
     const alice = await signUp("alice@example.com");
     const bob = await signUp("bob@example.com");
     const aliceGroceries = alice.categories.find((c) => c.name === "Groceries")!;
-    await addTransaction(alice.token, { category: aliceGroceries.id, type: "expense", amount: 99, date: "2026-07-01" });
+    await addTransaction(alice.token, { category: aliceGroceries.id, type: "expense", amountCents: 9900, date: "2026-07-01" });
 
     const res = await request(app).get("/api/transactions/export").set("Authorization", `Bearer ${bob.token}`);
     expect(csvLines(res.text)).toEqual(["Date,Type,Category,Description,Amount,Source"]);

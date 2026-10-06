@@ -7,7 +7,8 @@ import morgan from "morgan";
 import { env } from "./config/env";
 import { errorHandler } from "./middleware/errorHandler";
 import { notFound } from "./middleware/notFound";
-import { authRouter } from "./routes/auth.routes";
+import { AuthRateLimitConfig, DEFAULT_AUTH_RATE_LIMITS } from "./middleware/rateLimit";
+import { createAuthRouter } from "./routes/auth.routes";
 import { budgetRouter } from "./routes/budget.routes";
 import { categoryRouter } from "./routes/category.routes";
 import { dashboardRouter } from "./routes/dashboard.routes";
@@ -16,8 +17,19 @@ import { loanRouter } from "./routes/loan.routes";
 import { recurringRouter } from "./routes/recurring.routes";
 import { transactionRouter } from "./routes/transaction.routes";
 
-export function createApp(): Express {
+export interface AppOptions {
+  // Per-IP limits on login/signup. Defaults to DEFAULT_AUTH_RATE_LIMITS, or
+  // off under NODE_ENV=test (suites create many accounts from one address);
+  // the rate-limit tests pass explicit limits.
+  authRateLimits?: AuthRateLimitConfig | false;
+}
+
+export function createApp(options: AppOptions = {}): Express {
   const app = express();
+
+  // Only believe X-Forwarded-For when a trusted proxy is configured (see
+  // TRUST_PROXY in config/env.ts); otherwise req.ip is the socket address.
+  app.set("trust proxy", env.TRUST_PROXY);
 
   app.use(helmet());
   app.use(cors({ origin: env.CLIENT_ORIGIN, credentials: true }));
@@ -31,7 +43,8 @@ export function createApp(): Express {
   }
 
   app.use("/api/health", healthRouter);
-  app.use("/api/auth", authRouter);
+  const authRateLimits = options.authRateLimits ?? (env.NODE_ENV === "test" ? false : DEFAULT_AUTH_RATE_LIMITS);
+  app.use("/api/auth", createAuthRouter(authRateLimits));
   app.use("/api/categories", categoryRouter);
   app.use("/api/transactions", transactionRouter);
   app.use("/api/budgets", budgetRouter);

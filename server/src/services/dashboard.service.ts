@@ -2,24 +2,26 @@ import { Types } from "mongoose";
 import { Transaction } from "../models/Transaction";
 import { currentMonthYear } from "../utils/date";
 
+// All money values are integer cents (see shared/src/money.ts) — sums of
+// integers, so totals are exact.
 export interface DashboardSummary {
-  income: number; // non-loan income only
-  expense: number; // non-loan expense only
-  netLending: number; // loan income − loan expense this month (can be negative)
-  net: number; // income − expense + netLending (== true total income − total expense)
+  incomeCents: number; // non-loan income only
+  expenseCents: number; // non-loan expense only
+  netLendingCents: number; // loan income − loan expense this month (can be negative)
+  netCents: number; // income − expense + netLending (== true total income − total expense)
 }
 
 export interface CategorySpending {
   categoryId: string;
   name: string;
   color: string;
-  amount: number;
+  amountCents: number;
 }
 
 export interface MonthlyTrendPoint {
   month: string; // "2026-01"
-  income: number;
-  expense: number;
+  incomeCents: number;
+  expenseCents: number;
 }
 
 // UTC, not the local-time Date constructor: getIncomeVsExpenseTrend below
@@ -57,14 +59,14 @@ export async function getSummary(userId: string, month: number, year: number): P
       $facet: {
         income: [
           { $match: { type: "income", source: { $ne: "loan" } } },
-          { $group: { _id: null, total: { $sum: "$amount" } } },
+          { $group: { _id: null, total: { $sum: "$amountCents" } } },
         ],
         expense: [
           { $match: { type: "expense", source: { $ne: "loan" } } },
-          { $group: { _id: null, total: { $sum: "$amount" } } },
+          { $group: { _id: null, total: { $sum: "$amountCents" } } },
         ],
-        loanIncome: [{ $match: { type: "income", source: "loan" } }, { $group: { _id: null, total: { $sum: "$amount" } } }],
-        loanExpense: [{ $match: { type: "expense", source: "loan" } }, { $group: { _id: null, total: { $sum: "$amount" } } }],
+        loanIncome: [{ $match: { type: "income", source: "loan" } }, { $group: { _id: null, total: { $sum: "$amountCents" } } }],
+        loanExpense: [{ $match: { type: "expense", source: "loan" } }, { $group: { _id: null, total: { $sum: "$amountCents" } } }],
       },
     },
   ]);
@@ -74,7 +76,7 @@ export async function getSummary(userId: string, month: number, year: number): P
   const loanIncome = result?.loanIncome[0]?.total ?? 0;
   const loanExpense = result?.loanExpense[0]?.total ?? 0;
   const netLending = loanIncome - loanExpense;
-  return { income, expense, netLending, net: income - expense + netLending };
+  return { incomeCents: income, expenseCents: expense, netLendingCents: netLending, netCents: income - expense + netLending };
 }
 
 const SPENDING_TOP_N = 7;
@@ -85,15 +87,15 @@ export async function getSpendingByCategory(userId: string, month: number, year:
 
   const results = await Transaction.aggregate<{
     _id: Types.ObjectId;
-    amount: number;
+    amountCents: number;
     category: { name: string; color: string }[];
   }>([
     // Loans are asset transfers, not spending behavior — excluded here (and
     // from the trend below) so a single large loan doesn't dominate the
     // category breakdown or misrepresent discretionary spending.
     { $match: { user: new Types.ObjectId(userId), type: "expense", source: { $ne: "loan" }, date: { $gte: start, $lt: end } } },
-    { $group: { _id: "$category", amount: { $sum: "$amount" } } },
-    { $sort: { amount: -1 } },
+    { $group: { _id: "$category", amountCents: { $sum: "$amountCents" } } },
+    { $sort: { amountCents: -1 } },
     { $lookup: { from: "categories", localField: "_id", foreignField: "_id", as: "category" } },
   ]);
 
@@ -103,7 +105,7 @@ export async function getSpendingByCategory(userId: string, month: number, year:
       categoryId: r._id.toString(),
       name: r.category[0].name,
       color: r.category[0].color,
-      amount: r.amount,
+      amountCents: r.amountCents,
     }));
 
   // The categorical palette caps at 8 usable slots for identity — beyond
@@ -113,8 +115,8 @@ export async function getSpendingByCategory(userId: string, month: number, year:
     return rows;
   }
   const top = rows.slice(0, SPENDING_TOP_N);
-  const otherTotal = rows.slice(SPENDING_TOP_N).reduce((sum, r) => sum + r.amount, 0);
-  return [...top, { categoryId: "other", name: "Other", color: OTHER_BUCKET_COLOR, amount: otherTotal }];
+  const otherTotal = rows.slice(SPENDING_TOP_N).reduce((sum, r) => sum + r.amountCents, 0);
+  return [...top, { categoryId: "other", name: "Other", color: OTHER_BUCKET_COLOR, amountCents: otherTotal }];
 }
 
 export async function getIncomeVsExpenseTrend(
@@ -134,7 +136,7 @@ export async function getIncomeVsExpenseTrend(
     {
       $group: {
         _id: { year: { $year: "$date" }, month: { $month: "$date" }, type: "$type" },
-        total: { $sum: "$amount" },
+        total: { $sum: "$amountCents" },
       },
     },
   ]);
@@ -144,7 +146,7 @@ export async function getIncomeVsExpenseTrend(
   const points: MonthlyTrendPoint[] = [];
   for (let i = monthsBack - 1; i >= 0; i--) {
     const d = new Date(Date.UTC(year, month - 1 - i, 1));
-    points.push({ month: `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`, income: 0, expense: 0 });
+    points.push({ month: `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`, incomeCents: 0, expenseCents: 0 });
   }
   const indexByKey = new Map(points.map((p, idx) => [p.month, idx]));
 
@@ -153,9 +155,9 @@ export async function getIncomeVsExpenseTrend(
     const idx = indexByKey.get(key);
     if (idx === undefined) continue;
     if (r._id.type === "income") {
-      points[idx].income = r.total;
+      points[idx].incomeCents = r.total;
     } else {
-      points[idx].expense = r.total;
+      points[idx].expenseCents = r.total;
     }
   }
 

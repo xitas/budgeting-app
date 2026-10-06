@@ -1,10 +1,11 @@
 import { HydratedDocument, Model, Schema, Types, model } from "mongoose";
 import type { TransactionSource, TransactionType } from "shared";
+import { wholeCents } from "./money";
 
 export interface ITransaction {
   user: Types.ObjectId;
   category: Types.ObjectId;
-  amount: number;
+  amountCents: number;
   type: TransactionType;
   description: string;
   date: Date;
@@ -24,7 +25,7 @@ const transactionSchema = new Schema<ITransaction, TransactionModel>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
-    amount: { type: Number, required: true, min: 0 },
+    amountCents: { type: Number, required: true, min: 0, validate: wholeCents },
     type: { type: String, enum: ["income", "expense"], required: true },
     description: { type: String, trim: true, default: "" },
     date: { type: Date, required: true },

@@ -1,5 +1,5 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CATEGORICAL_PALETTE, type MonthlyTrendPoint } from "shared";
+import { CATEGORICAL_PALETTE, centsToUnits, formatMoney, type MonthlyTrendPoint } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
 import { useChartTheme } from "./chartTheme";
@@ -16,7 +16,12 @@ function monthLabel(monthKey: string): string {
 
 export function IncomeVsExpenseChart({ data }: { data: MonthlyTrendPoint[] }) {
   const theme = useChartTheme();
-  const chartData = data.map((d) => ({ ...d, label: monthLabel(d.month) }));
+  const chartData = data.map((d) => ({
+    ...d,
+    label: monthLabel(d.month),
+    income: centsToUnits(d.incomeCents), // plotted in currency units
+    expense: centsToUnits(d.expenseCents),
+  }));
 
   const tableView = (
     <table className="w-full text-left text-sm">
@@ -31,8 +36,8 @@ export function IncomeVsExpenseChart({ data }: { data: MonthlyTrendPoint[] }) {
         {chartData.map((row) => (
           <tr key={row.month} className="border-t border-slate-100">
             <td className="py-1.5">{row.label}</td>
-            <td className="py-1.5 text-right">{row.income.toFixed(2)}</td>
-            <td className="py-1.5 text-right">{row.expense.toFixed(2)}</td>
+            <td className="py-1.5 text-right">{formatMoney(row.incomeCents)}</td>
+            <td className="py-1.5 text-right">{formatMoney(row.expenseCents)}</td>
           </tr>
         ))}
       </tbody>

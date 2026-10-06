@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
-import type { Budget } from "shared";
+import { formatMoney, type Budget } from "shared";
 import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../components/ui/layout";
 import { Meter } from "../../components/ui/Meter";
 import { MonthSwitcher } from "../../components/ui/MonthSwitcher";
@@ -57,7 +57,7 @@ function BudgetCard({ budget, onPress }: { budget: Budget; onPress: () => void }
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const colors = useColors();
-  const over = budget.remaining < 0;
+  const over = budget.remainingCents < 0;
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
       <View style={styles.header}>
@@ -66,12 +66,12 @@ function BudgetCard({ budget, onPress }: { budget: Budget; onPress: () => void }
           {budget.category.name}
         </Text>
         <Text style={styles.amounts}>
-          {budget.spent.toFixed(2)} / {budget.limit.toFixed(2)}
+          {formatMoney(budget.spentCents)} / {formatMoney(budget.limitCents)}
         </Text>
       </View>
-      <Meter value={budget.spent} max={budget.limit} color={schemeColor(budget.category.color)} overColor={colors.danger} />
+      <Meter value={budget.spentCents} max={budget.limitCents} color={schemeColor(budget.category.color)} overColor={colors.danger} />
       <Text style={[styles.status, over && styles.statusOver]}>
-        {over ? `Over by ${Math.abs(budget.remaining).toFixed(2)}` : `${budget.remaining.toFixed(2)} left`}
+        {over ? `Over by ${formatMoney(budget.remainingCents, { sign: "never" })}` : `${formatMoney(budget.remainingCents)} left`}
       </Text>
     </Pressable>
   );

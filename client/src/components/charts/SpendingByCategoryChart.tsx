@@ -1,5 +1,5 @@
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import type { CategorySpending } from "shared";
+import { centsToUnits, formatMoney, type CategorySpending } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
 import { useChartTheme } from "./chartTheme";
@@ -32,7 +32,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
                 {row.name}
               </span>
             </td>
-            <td className="py-1.5 text-right">{row.amount.toFixed(2)}</td>
+            <td className="py-1.5 text-right">{formatMoney(row.amountCents)}</td>
           </tr>
         ))}
       </tbody>
@@ -42,7 +42,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
   return (
     <ChartCard title="Spending by category" tableView={tableView}>
       <ResponsiveContainer width="100%" height={Math.max(160, data.length * 36)}>
-        <BarChart data={data} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
+        <BarChart data={data.map((row) => ({ ...row, amount: centsToUnits(row.amountCents) }))} layout="vertical" margin={{ left: 8, right: 24, top: 4, bottom: 4 }}>
           <XAxis type="number" tick={{ fontSize: 12, fill: theme.axis }} axisLine={{ stroke: theme.grid }} tickLine={false} />
           <YAxis
             type="category"

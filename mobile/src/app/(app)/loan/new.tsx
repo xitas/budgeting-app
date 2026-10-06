@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -13,15 +12,17 @@ import { SegmentedControl } from "../../../components/ui/SegmentedControl";
 import { useCreateLoan } from "../../../features/loans/hooks";
 import { todayIso } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
+import { amountField, zodFormResolver } from "../../../lib/money";
 
 const createLoanSchema = z.object({
   counterparty: z.string().trim().min(1, "Counterparty is required"),
   direction: z.enum(["lent", "borrowed"]),
-  principal: z.coerce.number({ invalid_type_error: "Enter an amount" }).positive("Principal must be greater than 0"),
+  principalCents: amountField("Principal"),
   description: z.string().optional(),
   date: z.string().min(1, "Date is required"),
 });
-type CreateLoanFormValues = z.infer<typeof createLoanSchema>;
+type CreateLoanFormInput = z.input<typeof createLoanSchema>; // amount as typed text
+type CreateLoanFormValues = z.output<typeof createLoanSchema>; // amount in cents
 
 const DIRECTION_OPTIONS: { value: LoanDirection; label: string }[] = [
   { value: "lent", label: "I lent money" },
@@ -35,8 +36,8 @@ export default function NewLoanScreen() {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<CreateLoanFormValues>({
-    resolver: zodResolver(createLoanSchema),
+  } = useForm<CreateLoanFormInput, unknown, CreateLoanFormValues>({
+    resolver: zodFormResolver(createLoanSchema),
     defaultValues: { direction: "lent", date: todayIso() },
   });
 
@@ -60,7 +61,7 @@ export default function NewLoanScreen() {
         )}
       />
       <FormField control={control} name="counterparty" label="Counterparty" placeholder="Who?" error={errors.counterparty?.message} />
-      <FormField control={control} name="principal" label="Principal" keyboardType="decimal-pad" placeholder="0.00" error={errors.principal?.message} />
+      <FormField control={control} name="principalCents" label="Principal" keyboardType="decimal-pad" placeholder="0.00" error={errors.principalCents?.message} />
       <Controller
         control={control}
         name="date"

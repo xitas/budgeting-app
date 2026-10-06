@@ -1,10 +1,11 @@
 import { HydratedDocument, Model, Schema, Types, model } from "mongoose";
 import type { RecurringFrequency, TransactionType } from "shared";
+import { wholeCents } from "./money";
 
 export interface IRecurringTransaction {
   user: Types.ObjectId;
   category: Types.ObjectId;
-  amount: number;
+  amountCents: number;
   type: TransactionType;
   description: string;
   frequency: RecurringFrequency;
@@ -27,7 +28,7 @@ const recurringTransactionSchema = new Schema<IRecurringTransaction, RecurringTr
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
-    amount: { type: Number, required: true, min: 0 },
+    amountCents: { type: Number, required: true, min: 0, validate: wholeCents },
     type: { type: String, enum: ["income", "expense"], required: true },
     description: { type: String, trim: true, default: "" },
     frequency: { type: String, enum: ["daily", "weekly", "monthly"], required: true },

@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { positiveCents } from "./money";
 
 export const createLoanSchema = z.object({
   body: z.object({
     counterparty: z.string().min(1, "Counterparty is required"),
     direction: z.enum(["lent", "borrowed"]),
-    principal: z.coerce.number().positive("Principal must be greater than 0"),
+    principalCents: positiveCents("Principal"),
     description: z.string().optional().default(""),
     date: z.coerce.date(),
   }),
@@ -16,7 +17,7 @@ export const updateLoanSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
     counterparty: z.string().min(1).optional(),
-    principal: z.coerce.number().positive().optional(),
+    principalCents: positiveCents("Principal").optional(),
     description: z.string().optional(),
     date: z.coerce.date().optional(),
     writtenOff: z.boolean().optional(),
@@ -30,7 +31,7 @@ export const loanIdParamsSchema = z.object({
 export const addRepaymentSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
-    amount: z.coerce.number().positive("Amount must be greater than 0"),
+    amountCents: positiveCents("Amount"),
     date: z.coerce.date(),
     note: z.string().optional(),
   }),

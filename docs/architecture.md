@@ -53,6 +53,40 @@ Mail goes through `utils/mailer.ts` (nodemailer over SMTP). Locally, SMTP
 points at Mailpit from `docker-compose.yml` (inbox at http://localhost:8025);
 with `SMTP_HOST` unset, messages are logged to the console instead.
 
+## Login protection
+
+- **Per IP** (`middleware/rateLimit.ts`): login 20 attempts / 15 min,
+  sign-up 10 / hour, then 429 with `Retry-After` and the standard
+  `RateLimit` headers. Counters are in memory per API process — behind
+  several instances, give them a shared store (e.g. Redis).
+- **Per account** (`services/loginThrottle.service.ts`): after 3 failed
+  logins for an email, each further failure doubles the wait before the next
+  attempt is accepted (1 s, 2 s, 4 s … capped at 15 min). Attempts during the
+  wait get a 429 without checking the password — the right password too.
+  Never permanent: a successful login or a password reset clears it, and the
+  record expires 24 h after the last failure (MongoDB TTL index). Kept in
+  MongoDB so it holds across restarts and instances.
+- **No account discovery via login**: an unknown email gets exactly the
+  same 401, the same throttling and — via a bcrypt comparison against a dummy
+  hash — the same response time as a wrong password. (Sign-up still says an
+  email is taken; hiding that needs an email-verification step, and the
+  per-IP limit caps how fast it can be probed.)
+- **Proxies**: `req.ip` (what the per-IP limit counts) only uses
+  `X-Forwarded-For` when `TRUST_PROXY` is set — a hop count (`1` behind
+  one reverse proxy / load balancer) or the proxy addresses. Left unset, the
+  header is ignored, so clients can't fake a fresh address. `TRUST_PROXY=true`
+  is refused.
+
+## Production configuration
+
+With `NODE_ENV=production` the server refuses to start (and lists every
+problem with what to set) if: either JWT secret is missing, shorter than 32
+characters, still the `.env.example` placeholder, or both are the same;
+`MONGO_URI` uses a default password such as `changeme`; `MAIL_FROM` isn't
+set explicitly or isn't on a real domain; or `SMTP_HOST` isn't set (without
+it, reset emails — codes included — would only go to the log). Development
+keeps working with the example values.
+
 ## Mobile app (Expo)
 
 `mobile/` reuses the web client's API modules unchanged (same
@@ -114,29 +148,39 @@ the web fetches it as a Blob and saves it via a temporary object URL
 Chrome); mobile writes it to the cache folder with `expo-file-system` and
 opens the share sheet with `expo-sharing`.
 
-## Dependency audit (last reviewed 2026-09-26)
+## Dependency audit (last reviewed 2026-10-06)
 
-`npm audit` went from 25 findings (1 critical, 4 high, 20 moderate) to 15
-moderate. Fixed: `bcrypt` 5 → 6 (drops `@mapbox/node-pre-gyp` and its
-vulnerable `tar`; existing `$2b$` hashes verify unchanged), `node-cron` 3 → 4
-(no longer depends on `uuid`; ships its own types), plus in-range updates of
-`express`/`qs`, `morgan`, `react-router` and `brace-expansion`.
+`npm audit` went from 34 findings (1 critical, 22 high, 11 moderate) to 31
+(20 high, 11 moderate), with nothing left in the server or web app. Fixed:
+`axios` 1.18 → 1.20 (web + mobile; 12 advisories), `proxy-addr` 2.0.7 →
+2.0.8 (via Express; the critical one — only exploitable with `trust proxy`
+set to trust all, which the server refuses, see "Login protection"), and
+`source-map-js` 1.2.1 → 1.2.2 (Vite/Tailwind build tooling). `expo`,
+`expo-router` and `expo-constants` moved to the patch releases SDK 57
+expects (`npx expo install --fix`).
 
-The remaining 15 are two root causes inside Expo's own dependency tree,
-accepted until Expo ships updates:
+Everything left is inside Expo's own dependency tree and waits for Expo
+patch releases:
 
-- **`uuid` < 11.1.1 via `xcode`** (Expo's iOS config-plugin tooling; ~13 of
-  the 15 are Expo packages flagged only for depending on it). The advisory
-  concerns `v3`/`v5`/`v6` called with a buffer; `xcode` only calls
-  `uuid.v4()`, and only at iOS build time — never in the app or server. An
-  npm `overrides` entry doesn't take effect on this nested lockfile entry.
-- **`decode-uri-component` ≤ 0.4.2 via `expo-router` → `query-string@7`**
-  (DoS on malformed percent-encoding in the mobile app's URL parsing). The
-  only fixed release (0.5.0) is ESM-only, which `query-string@7` can't
-  `require()`, and `npm audit fix --force` would downgrade `expo-router` to
-  v5, breaking SDK 57.
+- **Metro / Expo CLI tooling** — `@expo/cli`, `@expo/metro*`, `metro*`,
+  `micromatch`/`braces`, `node-forge` (also via
+  `@expo/code-signing-certificates`, which `@expo/cli` pins to 0.0.6; 0.0.7
+  still uses the affected node-forge 1.4.0, the latest release), and the
+  `react-native`, `reanimated`/`worklets` and `datetimepicker` entries that
+  are flagged only for depending on Metro's packages. These run on the
+  developer machine (bundler, dev server, build signing), not in the shipped
+  app.
+- **`uuid` < 11.1.1 via `xcode`** (iOS config-plugin tooling, build time
+  only; `xcode` only calls `uuid.v4()`).
+- **`decode-uri-component` ≤ 0.4.2 via `expo-router` → `query-string@7`** —
+  the one that ships in the mobile app (DoS on malformed percent-encoding in
+  URL parsing). The fixed 0.5.0 is ESM-only, which `query-string@7` can't
+  `require()`.
 
-Don't run `npm audit fix --force` in this repo for that reason.
+npm's suggested fixes for these are `expo@44` / `react-native@0.72` /
+`expo-router@58` — major-version moves (mostly years-old downgrades) that
+would break SDK 57. Don't run `npm audit fix --force` in this repo; plain
+`npm audit fix` refuses too, since it would pull in the `expo@44` downgrade.
 
 ## CSV import
 
@@ -163,6 +207,40 @@ positive amount, category owned by the user and of the same type) and
 inserts them in one MongoDB transaction — all or nothing — with
 `source: "import"`. Up to 5,000 rows per request; that route alone gets a
 2 MB JSON limit instead of the default 100 KB.
+
+## Money (integer cents)
+
+Every amount is an integer count of cents — stored, sent over the API and
+summed that way — so totals are exact: 0.10 + 0.20 is 30 cents, not
+0.30000000000000004. The unit is in every field name: `amountCents`,
+`limitCents`, `principalCents`, `repayments[].amountCents`, and the derived
+`spentCents`, `remainingCents`, `repaidCents`, `outstandingCents`,
+`incomeCents`, `expenseCents`, `netCents`, `netLendingCents`. 1250.50 is
+`125050`. The API rejects anything else with a 400 (fractions of a cent,
+strings, the old decimal `amount` field), and the Mongoose schemas refuse to
+store a non-integer.
+
+Floats only exist at the edges, and only through `shared/src/money.ts`, used
+by both apps:
+
+- **Typed input** — `parseAmountInput("12.50")` → `1250`, parsed from the
+  text (never `Number(text) * 100`, which turns "0.29" into 28.999…).
+- **Display** — `formatMoney(cents)` / `formatSignedAmount(cents, type)`.
+- **CSV** — export writes normal decimals (`1250.50`); import parses the
+  file's text straight to cents, rounding amounts with more than 2 decimals
+  half up (`centsFromDecimal`).
+- **Charts** — `centsToUnits()` for the plotting scale only.
+
+The app has no currency setting; amounts are in a 2-decimal currency.
+
+**Existing databases** stored decimals (`amount: 12.5`). `npm run
+migrate:cents` (`server/src/migrations/`) converts them: it backs every
+affected collection up to `<name>_backup_<stamp>`, converts each document in
+one atomic update (new field set, old field removed — so a second run finds
+nothing to do and never multiplies by 100 twice), and checks that each
+collection's total before equals the total after. Values with more than 2
+decimals stop it unless `--accept-rounding` is passed. See the README for
+the steps.
 
 ## Data model decisions
 

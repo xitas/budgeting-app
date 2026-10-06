@@ -1,4 +1,3 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
@@ -11,21 +10,32 @@ import { Modal } from "../../components/ui/Modal";
 import { extractErrorMessage } from "../../lib/errors";
 import { downloadBlob } from "../../lib/download";
 import { formatDisplayDate } from "../../lib/formatDate";
+import { amountField, parseAmountDraft } from "../../lib/money";
+import { zodFormResolver } from "../../lib/zodFormResolver";
 import { exportTransactionsCsv } from "./api";
 import { useCategories } from "../categories/hooks";
 import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from "./hooks";
-import type { Transaction, TransactionFilters, UpdateTransactionInput } from "shared";
+import { centsToDecimalString, formatSignedAmount, type Transaction, type TransactionFilters } from "shared";
 import { useSchemeColor } from "../../context/ThemeContext";
 
 const transactionFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
   type: z.enum(["income", "expense"]),
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amountCents: amountField("Amount"),
   description: z.string().optional(),
   date: z.string().min(1, "Date is required"),
 });
 
-type TransactionFormValues = z.infer<typeof transactionFormSchema>;
+type TransactionFormInput = z.input<typeof transactionFormSchema>;
+type TransactionFormValues = z.output<typeof transactionFormSchema>;
+
+// Inline edit state: the amount stays as the typed text until saved.
+interface TransactionDraft {
+  category: string;
+  description: string;
+  date: string;
+  amount: string;
+}
 
 const PAGE_SIZE = 20;
 
@@ -41,9 +51,9 @@ function AddTransactionForm({ onSuccess }: { onSuccess: () => void }) {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<TransactionFormValues>({
-    resolver: zodResolver(transactionFormSchema),
-    defaultValues: { type: "expense", date: todayIso(), amount: undefined },
+  } = useForm<TransactionFormInput, unknown, TransactionFormValues>({
+    resolver: zodFormResolver(transactionFormSchema),
+    defaultValues: { type: "expense", date: todayIso() },
   });
 
   async function onSubmit(values: TransactionFormValues): Promise<void> {
@@ -75,8 +85,8 @@ function AddTransactionForm({ onSuccess }: { onSuccess: () => void }) {
             ))}
           </select>
         </Field>
-        <Field label="Amount" error={errors.amount?.message}>
-          <input type="number" step="0.01" className={inputClass} {...register("amount")} />
+        <Field label="Amount" error={errors.amountCents?.message}>
+          <input type="text" inputMode="decimal" placeholder="0.00" className={inputClass} {...register("amountCents")} />
         </Field>
         <Field label="Date" error={errors.date?.message}>
           <input type="date" className={inputClass} {...register("date")} />
@@ -93,12 +103,63 @@ function AddTransactionForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
+function AddTransactionButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Add transaction"
+      title="Add transaction"
+      className="rounded-full bg-blue-600 p-1.5 text-white shadow-sm transition-colors hover:bg-blue-700"
+    >
+      <PlusIcon className="h-3.5 w-3.5" />
+    </button>
+  );
+}
+
+// Edit/delete, identical in the table and the phone card list. Loan-linked
+// transactions are managed from the Loans tab, so both stay disabled there.
+function RowActions({ tx, onEdit, onDelete, error }: { tx: Transaction; onEdit: () => void; onDelete: () => void; error?: string }) {
+  const managedByLoan = tx.source === "loan";
+  return (
+    <>
+      <span className="inline-flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onEdit}
+          disabled={managedByLoan}
+          aria-label="Edit transaction"
+          title={managedByLoan ? "Managed in the Loans tab" : "Edit"}
+          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+        >
+          <PencilIcon className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={managedByLoan}
+          aria-label="Delete transaction"
+          title={managedByLoan ? "Managed in the Loans tab" : "Delete"}
+          className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+        >
+          <TrashIcon className="h-4 w-4" />
+        </button>
+      </span>
+      {error && <div className="text-xs text-red-600">{error}</div>}
+    </>
+  );
+}
+
+function amountClass(tx: Transaction): string {
+  return tx.type === "income" ? "text-green-700" : "text-slate-900";
+}
+
 export function TransactionsPanel() {
   const schemeColor = useSchemeColor();
   const [filters, setFilters] = useState<TransactionFilters>({ page: 1, limit: PAGE_SIZE });
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<UpdateTransactionInput>({});
+  const [draft, setDraft] = useState<TransactionDraft>({ category: "", description: "", date: "", amount: "" });
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
   const [isExporting, setIsExporting] = useState(false);
@@ -114,26 +175,31 @@ export function TransactionsPanel() {
     setEditError(null);
     setDraft({
       category: tx.category.id,
-      type: tx.type,
-      amount: tx.amount,
       description: tx.description,
       date: tx.date.slice(0, 10),
+      amount: centsToDecimalString(tx.amountCents),
     });
   }
 
   function cancelEdit(): void {
     setEditingId(null);
-    setDraft({});
     setEditError(null);
   }
 
   async function saveEdit(): Promise<void> {
     if (!editingId) return;
+    const amount = parseAmountDraft("Amount", draft.amount);
+    if ("error" in amount) {
+      setEditError(amount.error);
+      return;
+    }
     setEditError(null);
     try {
-      await updateTransaction.mutateAsync({ id: editingId, updates: draft });
+      await updateTransaction.mutateAsync({
+        id: editingId,
+        updates: { category: draft.category, description: draft.description, date: draft.date, amountCents: amount.cents },
+      });
       setEditingId(null);
-      setDraft({});
     } catch (err) {
       setEditError(extractErrorMessage(err));
     }
@@ -161,8 +227,70 @@ export function TransactionsPanel() {
     }
   }
 
+  // The inline-edit inputs, placed by the table (one per cell) or the phone
+  // card (stacked) — same state and handlers either way.
+  const draftInputs = {
+    date: (
+      <input
+        type="date"
+        aria-label="Date"
+        className={inputClass}
+        value={draft.date}
+        onChange={(e) => setDraft((prev) => ({ ...prev, date: e.target.value }))}
+      />
+    ),
+    category: (
+      <select
+        aria-label="Category"
+        className={inputClass}
+        value={draft.category}
+        onChange={(e) => setDraft((prev) => ({ ...prev, category: e.target.value }))}
+      >
+        {categories?.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+    ),
+    description: (
+      <input
+        type="text"
+        aria-label="Description"
+        className={inputClass}
+        value={draft.description}
+        onChange={(e) => setDraft((prev) => ({ ...prev, description: e.target.value }))}
+      />
+    ),
+    amount: (
+      <input
+        type="text"
+        inputMode="decimal"
+        aria-label="Amount"
+        className={inputClass}
+        value={draft.amount}
+        onChange={(e) => setDraft((prev) => ({ ...prev, amount: e.target.value }))}
+      />
+    ),
+  };
+  const editActions = (
+    <>
+      <InlineEditActions onSave={() => void saveEdit()} onCancel={cancelEdit} isSaving={updateTransaction.isPending} />
+      {editError && <div className="mt-1 text-xs text-red-600">{editError}</div>}
+    </>
+  );
+
+  const statusMessage = isLoading ? (
+    <p className="p-4 text-sm text-slate-500">Loading...</p>
+  ) : isError ? (
+    <p className="p-4 text-sm text-red-600">Couldn&apos;t load transactions. Try refreshing the page.</p>
+  ) : !data || data.items.length === 0 ? (
+    <p className="p-4 text-sm text-slate-500">No transactions found.</p>
+  ) : null;
+  const items = statusMessage ? [] : (data?.items ?? []);
+
   return (
-    <div className="flex-1 lg:flex-[2]">
+    <div className="min-w-0 flex-1 lg:flex-[2]">
       <h1 className="mb-4 text-xl font-semibold text-slate-900">Transactions</h1>
 
       <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-surface p-4 shadow-sm">
@@ -234,7 +362,53 @@ export function TransactionsPanel() {
         </div>
       </div>
 
-      <div className="mb-4 overflow-x-auto rounded-lg border border-slate-200 bg-surface shadow-sm">
+      {/* Phones: a card per transaction, so the amount and actions never sit
+          off-screen behind a sideways scroll. */}
+      <div className="mb-4 rounded-lg border border-slate-200 bg-surface shadow-sm sm:hidden">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2 text-sm text-slate-500">
+          <span>{data ? `${data.total} transaction${data.total === 1 ? "" : "s"}` : "Transactions"}</span>
+          <AddTransactionButton onClick={() => setIsAddOpen(true)} />
+        </div>
+        {statusMessage}
+        <ul>
+          {items.map((tx) =>
+            tx.id === editingId ? (
+              <li key={tx.id} className="space-y-2 border-b border-l-2 border-slate-100 border-l-blue-400 bg-blue-50/50 p-4 last:border-b-0">
+                <div className="grid grid-cols-2 gap-2">
+                  {draftInputs.date}
+                  {draftInputs.amount}
+                </div>
+                {draftInputs.category}
+                {draftInputs.description}
+                <div className="flex items-center justify-end">{editActions}</div>
+              </li>
+            ) : (
+              <li key={tx.id} className="flex items-start gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0">
+                <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: schemeColor(tx.category.color) }} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="truncate text-sm font-medium text-slate-900">{tx.description || tx.category.name}</span>
+                    <span className={`shrink-0 text-sm font-semibold tabular-nums ${amountClass(tx)}`}>
+                      {formatSignedAmount(tx.amountCents, tx.type)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate text-xs text-slate-500">
+                      {tx.category.name} · {formatDisplayDate(tx.date)}
+                    </span>
+                    <div className="-mr-1.5 shrink-0 text-right">
+                      <RowActions tx={tx} onEdit={() => startEdit(tx)} onDelete={() => void handleDelete(tx.id)} error={deleteErrors[tx.id]} />
+                    </div>
+                  </div>
+                </div>
+              </li>
+            )
+          )}
+        </ul>
+      </div>
+
+      {/* Wider screens: the table. */}
+      <div className="mb-4 hidden overflow-x-auto rounded-lg border border-slate-200 bg-surface shadow-sm sm:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-200 text-slate-500">
             <tr>
@@ -243,39 +417,17 @@ export function TransactionsPanel() {
               <th className="px-4 py-2 font-medium">Description</th>
               <th className="px-4 py-2 text-right font-medium">Amount</th>
               <th className="px-4 py-2 text-right">
-                <button
-                  type="button"
-                  onClick={() => setIsAddOpen(true)}
-                  aria-label="Add transaction"
-                  title="Add transaction"
-                  className="rounded-full bg-blue-600 p-1.5 text-white shadow-sm transition-colors hover:bg-blue-700"
-                >
-                  <PlusIcon className="h-3.5 w-3.5" />
-                </button>
+                <AddTransactionButton onClick={() => setIsAddOpen(true)} />
               </th>
             </tr>
           </thead>
           <tbody>
-            {isLoading ? (
+            {statusMessage ? (
               <tr>
-                <td colSpan={5} className="p-4 text-sm text-slate-500">
-                  Loading...
-                </td>
-              </tr>
-            ) : isError ? (
-              <tr>
-                <td colSpan={5} className="p-4 text-sm text-red-600">
-                  Couldn&apos;t load transactions. Try refreshing the page.
-                </td>
-              </tr>
-            ) : !data || data.items.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="p-4 text-sm text-slate-500">
-                  No transactions found.
-                </td>
+                <td colSpan={5}>{statusMessage}</td>
               </tr>
             ) : (
-              data.items.map((tx) => {
+              items.map((tx) => {
                 const isEditing = tx.id === editingId;
                 return (
                   <tr
@@ -286,48 +438,11 @@ export function TransactionsPanel() {
                   >
                     {isEditing ? (
                       <>
-                        <td className="px-4 py-2">
-                          <input
-                            type="date"
-                            className={inputClass}
-                            value={draft.date ?? ""}
-                            onChange={(e) => setDraft((prev) => ({ ...prev, date: e.target.value }))}
-                          />
-                        </td>
-                        <td className="px-4 py-2">
-                          <select
-                            className={inputClass}
-                            value={draft.category ?? ""}
-                            onChange={(e) => setDraft((prev) => ({ ...prev, category: e.target.value }))}
-                          >
-                            {categories?.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-4 py-2">
-                          <input
-                            type="text"
-                            className={inputClass}
-                            value={draft.description ?? ""}
-                            onChange={(e) => setDraft((prev) => ({ ...prev, description: e.target.value }))}
-                          />
-                        </td>
-                        <td className="px-4 py-2 text-right">
-                          <input
-                            type="number"
-                            step="0.01"
-                            className={inputClass}
-                            value={draft.amount ?? ""}
-                            onChange={(e) => setDraft((prev) => ({ ...prev, amount: Number(e.target.value) }))}
-                          />
-                        </td>
-                        <td className="px-4 py-2 text-right">
-                          <InlineEditActions onSave={() => void saveEdit()} onCancel={cancelEdit} isSaving={updateTransaction.isPending} />
-                          {editError && <div className="mt-1 text-xs text-red-600">{editError}</div>}
-                        </td>
+                        <td className="px-4 py-2">{draftInputs.date}</td>
+                        <td className="px-4 py-2">{draftInputs.category}</td>
+                        <td className="px-4 py-2">{draftInputs.description}</td>
+                        <td className="px-4 py-2 text-right">{draftInputs.amount}</td>
+                        <td className="px-4 py-2 text-right">{editActions}</td>
                       </>
                     ) : (
                       <>
@@ -339,34 +454,9 @@ export function TransactionsPanel() {
                           </span>
                         </td>
                         <td className="px-4 py-2 text-slate-600">{tx.description || "—"}</td>
-                        <td className={`px-4 py-2 text-right ${tx.type === "income" ? "text-green-700" : "text-slate-900"}`}>
-                          {tx.type === "income" ? "+" : "-"}
-                          {tx.amount.toFixed(2)}
-                        </td>
+                        <td className={`px-4 py-2 text-right ${amountClass(tx)}`}>{formatSignedAmount(tx.amountCents, tx.type)}</td>
                         <td className="px-4 py-2 text-right">
-                          <span className="inline-flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => startEdit(tx)}
-                              disabled={tx.source === "loan"}
-                              aria-label="Edit transaction"
-                              title={tx.source === "loan" ? "Managed in the Loans tab" : "Edit"}
-                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-link disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
-                            >
-                              <PencilIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => void handleDelete(tx.id)}
-                              disabled={tx.source === "loan"}
-                              aria-label="Delete transaction"
-                              title={tx.source === "loan" ? "Managed in the Loans tab" : "Delete"}
-                              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-slate-400"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </span>
-                          {deleteErrors[tx.id] && <div className="text-xs text-red-600">{deleteErrors[tx.id]}</div>}
+                          <RowActions tx={tx} onEdit={() => startEdit(tx)} onDelete={() => void handleDelete(tx.id)} error={deleteErrors[tx.id]} />
                         </td>
                       </>
                     )}

@@ -29,13 +29,13 @@ describe("loan.service", () => {
     const loan = await loanService.createLoan(user.id, {
       counterparty: "Alex",
       direction: "lent",
-      principal: 500,
+      principalCents: 50000,
       description: "",
       date: new Date("2026-06-01"),
     });
 
-    expect(loan.outstanding).toBe(500);
-    expect(loan.repaid).toBe(0);
+    expect(loan.outstandingCents).toBe(50000);
+    expect(loan.repaidCents).toBe(0);
     expect(loan.status).toBe("open");
 
     const transaction = await Transaction.findById(loan.transactionId).populate<{
@@ -43,7 +43,7 @@ describe("loan.service", () => {
     }>("category", "name type");
     expect(transaction).not.toBeNull();
     expect(transaction!.type).toBe("expense");
-    expect(transaction!.amount).toBe(500);
+    expect(transaction!.amountCents).toBe(50000);
     expect(transaction!.source).toBe("loan");
     expect((transaction!.category as unknown as { name: string }).name).toBe("Loan Out");
   });
@@ -53,7 +53,7 @@ describe("loan.service", () => {
     const loan = await loanService.createLoan(user.id, {
       counterparty: "Sam",
       direction: "borrowed",
-      principal: 200,
+      principalCents: 20000,
       description: "",
       date: new Date("2026-06-01"),
     });
@@ -70,28 +70,28 @@ describe("loan.service", () => {
     const loan = await loanService.createLoan(user.id, {
       counterparty: "Alex",
       direction: "lent",
-      principal: 500,
+      principalCents: 50000,
       description: "",
       date: new Date("2026-06-01"),
     });
 
     const afterFirst = await loanService.addRepayment(user.id, loan.id, {
-      amount: 200,
+      amountCents: 20000,
       date: new Date("2026-06-15"),
     });
-    expect(afterFirst.repaid).toBe(200);
-    expect(afterFirst.outstanding).toBe(300);
+    expect(afterFirst.repaidCents).toBe(20000);
+    expect(afterFirst.outstandingCents).toBe(30000);
 
     const repaymentTx = await Transaction.findById(afterFirst.repayments[0].transactionId);
     expect(repaymentTx!.type).toBe("income"); // lent + repayment = income to you
-    expect(repaymentTx!.amount).toBe(200);
+    expect(repaymentTx!.amountCents).toBe(20000);
 
     const afterSecond = await loanService.addRepayment(user.id, loan.id, {
-      amount: 100,
+      amountCents: 10000,
       date: new Date("2026-07-01"),
     });
-    expect(afterSecond.repaid).toBe(300);
-    expect(afterSecond.outstanding).toBe(200);
+    expect(afterSecond.repaidCents).toBe(30000);
+    expect(afterSecond.outstandingCents).toBe(20000);
   });
 
   it("overpayment goes negative without erroring", async () => {
@@ -99,13 +99,13 @@ describe("loan.service", () => {
     const loan = await loanService.createLoan(user.id, {
       counterparty: "Alex",
       direction: "lent",
-      principal: 100,
+      principalCents: 10000,
       description: "",
       date: new Date("2026-06-01"),
     });
 
-    const after = await loanService.addRepayment(user.id, loan.id, { amount: 150, date: new Date("2026-06-15") });
-    expect(after.outstanding).toBe(-50);
+    const after = await loanService.addRepayment(user.id, loan.id, { amountCents: 15000, date: new Date("2026-06-15") });
+    expect(after.outstandingCents).toBe(-5000);
   });
 
   it("writing off a loan zeroes outstanding without touching repaid or creating a transaction", async () => {
@@ -113,19 +113,19 @@ describe("loan.service", () => {
     const loan = await loanService.createLoan(user.id, {
       counterparty: "Alex",
       direction: "lent",
-      principal: 500,
+      principalCents: 50000,
       description: "",
       date: new Date("2026-06-01"),
     });
-    await loanService.addRepayment(user.id, loan.id, { amount: 100, date: new Date("2026-06-15") });
+    await loanService.addRepayment(user.id, loan.id, { amountCents: 10000, date: new Date("2026-06-15") });
 
     const countBefore = await Transaction.countDocuments({ user: user.id });
     const written = await loanService.updateLoan(user.id, loan.id, { writtenOff: true });
     const countAfter = await Transaction.countDocuments({ user: user.id });
 
     expect(written.status).toBe("written_off");
-    expect(written.outstanding).toBe(0);
-    expect(written.repaid).toBe(100); // unchanged
+    expect(written.outstandingCents).toBe(0);
+    expect(written.repaidCents).toBe(10000); // unchanged
     expect(countAfter).toBe(countBefore); // no new transaction
   });
 
@@ -134,12 +134,12 @@ describe("loan.service", () => {
     const loan = await loanService.createLoan(user.id, {
       counterparty: "Alex",
       direction: "lent",
-      principal: 500,
+      principalCents: 50000,
       description: "",
       date: new Date("2026-06-01"),
     });
-    await loanService.addRepayment(user.id, loan.id, { amount: 100, date: new Date("2026-06-15") });
-    await loanService.addRepayment(user.id, loan.id, { amount: 100, date: new Date("2026-07-01") });
+    await loanService.addRepayment(user.id, loan.id, { amountCents: 10000, date: new Date("2026-06-15") });
+    await loanService.addRepayment(user.id, loan.id, { amountCents: 10000, date: new Date("2026-07-01") });
 
     expect(await Transaction.countDocuments({ loanSourceId: loan._id })).toBe(3);
 
@@ -153,20 +153,20 @@ describe("loan.service", () => {
     const loan = await loanService.createLoan(user.id, {
       counterparty: "Alex",
       direction: "lent",
-      principal: 500,
+      principalCents: 50000,
       description: "",
       date: new Date("2026-06-01"),
     });
-    const afterFirst = await loanService.addRepayment(user.id, loan.id, { amount: 100, date: new Date("2026-06-15") });
-    const afterSecond = await loanService.addRepayment(user.id, loan.id, { amount: 150, date: new Date("2026-07-01") });
-    expect(afterSecond.outstanding).toBe(250);
+    const afterFirst = await loanService.addRepayment(user.id, loan.id, { amountCents: 10000, date: new Date("2026-06-15") });
+    const afterSecond = await loanService.addRepayment(user.id, loan.id, { amountCents: 15000, date: new Date("2026-07-01") });
+    expect(afterSecond.outstandingCents).toBe(25000);
 
     const firstRepaymentId = afterFirst.repayments[0].id as string;
     const firstRepaymentTxId = afterFirst.repayments[0].transactionId;
 
     const afterRemoval = await loanService.removeRepayment(user.id, loan.id, firstRepaymentId);
-    expect(afterRemoval.repaid).toBe(150);
-    expect(afterRemoval.outstanding).toBe(350);
+    expect(afterRemoval.repaidCents).toBe(15000);
+    expect(afterRemoval.outstandingCents).toBe(35000);
     expect(afterRemoval.repayments).toHaveLength(1);
 
     expect(await Transaction.findById(firstRepaymentTxId)).toBeNull();

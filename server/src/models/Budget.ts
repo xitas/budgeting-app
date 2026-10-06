@@ -1,9 +1,10 @@
 import { HydratedDocument, Model, Schema, Types, model } from "mongoose";
+import { wholeCents } from "./money";
 
 export interface IBudget {
   user: Types.ObjectId;
   category: Types.ObjectId;
-  limit: number;
+  limitCents: number;
   month: number; // 1-12
   year: number;
 }
@@ -16,7 +17,7 @@ const budgetSchema = new Schema<IBudget, BudgetModel>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
-    limit: { type: Number, required: true, min: 0 },
+    limitCents: { type: Number, required: true, min: 0, validate: wholeCents },
     month: { type: Number, required: true, min: 1, max: 12 },
     year: { type: Number, required: true, min: 2000, max: 2100 },
   },

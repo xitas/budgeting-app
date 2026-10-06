@@ -1,4 +1,4 @@
-import type { TransactionType } from "shared";
+import { centsFromDecimal, parseAmountInput, type TransactionType } from "shared";
 
 // Everything here is pure: file text in, typed rows out. The import page
 // wires it to the UI; the tests pin down the fiddly parts (quoting, date and
@@ -153,9 +153,11 @@ export function detectDecimalSeparator(samples: string[]): DecimalSeparator {
   return comma > dot ? "," : ".";
 }
 
-// Signed number, or null. Handles currency symbols and codes, spaces and
-// thousands separators, "(45.00)" and trailing-minus negatives.
-export function parseAmount(raw: string, decimal: DecimalSeparator): number | null {
+// Signed amount in integer cents, or null. Handles currency symbols and
+// codes, spaces and thousands separators, "(45.00)" and trailing-minus
+// negatives. Converted from the cleaned-up text, not via a float, so
+// "0.29" is exactly 29; more than 2 decimals round half up.
+export function parseAmountCents(raw: string, decimal: DecimalSeparator): number | null {
   let s = raw.trim();
   if (!s) return null;
   let negative = false;
@@ -172,8 +174,8 @@ export function parseAmount(raw: string, decimal: DecimalSeparator): number | nu
   s = s.replace(/[^\d.,]/g, "").split(thousands).join("");
   if (decimal === ",") s = s.replace(",", ".");
   if (!/^\d+(\.\d+)?$/.test(s)) return null;
-  const n = Number(s);
-  return negative ? -n : n;
+  const cents = parseAmountInput(s) ?? centsFromDecimal(Number(s));
+  return negative ? -cents : cents;
 }
 
 // ---------------------------------------------------------------- Mapping
@@ -230,7 +232,7 @@ export interface ParsedRow {
   line: number; // 1-based line in the file (header = 1), for error messages
   date: string | null;
   type: TransactionType | null;
-  amount: number | null; // always positive
+  amountCents: number | null; // always positive
   description: string;
   categoryName: string;
   error: string | null;
@@ -250,7 +252,7 @@ export function buildRows(dataRows: string[][], mapping: ColumnMapping, options:
       line: i + 2,
       date: null,
       type: null,
-      amount: null,
+      amountCents: null,
       description: cell(mapping.description),
       categoryName: cell(mapping.category),
       error: null,
@@ -263,11 +265,11 @@ export function buildRows(dataRows: string[][], mapping: ColumnMapping, options:
 
     let signed: number | null;
     if (mapping.amountMode === "debitCredit") {
-      const debit = parseAmount(cell(mapping.debit), options.decimal);
-      const credit = parseAmount(cell(mapping.credit), options.decimal);
+      const debit = parseAmountCents(cell(mapping.debit), options.decimal);
+      const credit = parseAmountCents(cell(mapping.credit), options.decimal);
       signed = debit || credit ? (credit ?? 0) - Math.abs(debit ?? 0) : null;
     } else {
-      signed = parseAmount(cell(mapping.amount), options.decimal);
+      signed = parseAmountCents(cell(mapping.amount), options.decimal);
     }
     if (signed === null) {
       return { ...row, error: "Missing or unrecognised amount" };
@@ -283,7 +285,7 @@ export function buildRows(dataRows: string[][], mapping: ColumnMapping, options:
       return { ...row, error: `Unrecognised type "${cell(mapping.type)}"` };
     }
     row.type = typed ?? (signed < 0 ? "expense" : "income");
-    row.amount = Math.round(Math.abs(signed) * 100) / 100;
+    row.amountCents = Math.abs(signed);
     return row;
   });
 }

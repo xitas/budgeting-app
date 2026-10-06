@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { formatMoney } from "shared";
 import { BudgetVsActualChart } from "../../../components/charts/BudgetVsActualChart";
 import { IncomeVsExpenseChart } from "../../../components/charts/IncomeVsExpenseChart";
 import { SpendingByCategoryChart } from "../../../components/charts/SpendingByCategoryChart";
@@ -47,10 +48,10 @@ export default function DashboardScreen() {
 
       {/* Same tones as the web dashboard. */}
       <View style={styles.tiles}>
-        <StatTile label="Income" value={(s?.income ?? 0).toFixed(2)} tone="positive" />
-        <StatTile label="Expense" value={(s?.expense ?? 0).toFixed(2)} tone="negative" />
-        <StatTile label="Net lending" value={(s?.netLending ?? 0).toFixed(2)} tone={s && s.netLending < 0 ? "negative" : "neutral"} />
-        <StatTile label="Net" value={(s?.net ?? 0).toFixed(2)} tone={s && s.net < 0 ? "negative" : "neutral"} />
+        <StatTile label="Income" value={formatMoney(s?.incomeCents ?? 0)} tone="positive" />
+        <StatTile label="Expense" value={formatMoney(s?.expenseCents ?? 0)} tone="negative" />
+        <StatTile label="Net lending" value={formatMoney(s?.netLendingCents ?? 0)} tone={s && s.netLendingCents < 0 ? "negative" : "neutral"} />
+        <StatTile label="Net" value={formatMoney(s?.netCents ?? 0)} tone={s && s.netCents < 0 ? "negative" : "neutral"} />
       </View>
 
       <SpendingByCategoryChart data={spending.data ?? []} />

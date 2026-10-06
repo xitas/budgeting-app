@@ -42,8 +42,10 @@ function clampToToday(date: Date): Date {
   return date > now ? now : date;
 }
 
-function randomAmount(min: number, max: number): number {
-  return Math.round((min + Math.random() * (max - min)) * 100) / 100;
+// A random amount between min and max whole currency units, as integer cents
+// (money is stored in cents — see shared/src/money.ts).
+function randomCents(min: number, max: number): number {
+  return Math.round((min + Math.random() * (max - min)) * 100);
 }
 
 async function seed(): Promise<void> {
@@ -69,7 +71,7 @@ async function seed(): Promise<void> {
   const salaryRecurring = await RecurringTransaction.create({
     user: user._id,
     category: categoryByName("Salary")._id,
-    amount: 3200,
+    amountCents: 320000,
     type: "income",
     description: "Monthly salary",
     frequency: "monthly",
@@ -80,7 +82,7 @@ async function seed(): Promise<void> {
   const rentRecurring = await RecurringTransaction.create({
     user: user._id,
     category: categoryByName("Rent")._id,
-    amount: 1200,
+    amountCents: 120000,
     type: "expense",
     description: "Rent",
     frequency: "monthly",
@@ -95,7 +97,7 @@ async function seed(): Promise<void> {
   const manualRows: Array<{
     user: typeof user._id;
     category: mongoose.Types.ObjectId;
-    amount: number;
+    amountCents: number;
     type: "income" | "expense";
     description: string;
     date: Date;
@@ -114,7 +116,7 @@ async function seed(): Promise<void> {
       {
         user: user._id,
         category: categoryByName("Utilities")._id,
-        amount: randomAmount(80, 130),
+        amountCents: randomCents(80, 130),
         type: "expense",
         description: "Electricity & water",
         date: mkDate(3),
@@ -123,7 +125,7 @@ async function seed(): Promise<void> {
       {
         user: user._id,
         category: categoryByName("Dining Out")._id,
-        amount: randomAmount(20, 45),
+        amountCents: randomCents(20, 45),
         type: "expense",
         description: "Dinner out",
         date: mkDate(10),
@@ -132,7 +134,7 @@ async function seed(): Promise<void> {
       {
         user: user._id,
         category: categoryByName("Dining Out")._id,
-        amount: randomAmount(10, 25),
+        amountCents: randomCents(10, 25),
         type: "expense",
         description: "Lunch",
         date: mkDate(22),
@@ -141,7 +143,7 @@ async function seed(): Promise<void> {
       {
         user: user._id,
         category: categoryByName("Entertainment")._id,
-        amount: randomAmount(10, 20),
+        amountCents: randomCents(10, 20),
         type: "expense",
         description: "Streaming subscription",
         date: mkDate(12),
@@ -150,7 +152,7 @@ async function seed(): Promise<void> {
       {
         user: user._id,
         category: categoryByName("Transportation")._id,
-        amount: randomAmount(40, 70),
+        amountCents: randomCents(40, 70),
         type: "expense",
         description: "Gas",
         date: mkDate(8),
@@ -159,7 +161,7 @@ async function seed(): Promise<void> {
       {
         user: user._id,
         category: categoryByName("Freelance")._id,
-        amount: randomAmount(150, 400),
+        amountCents: randomCents(150, 400),
         type: "income",
         description: "Side project",
         date: mkDate(18),
@@ -171,7 +173,7 @@ async function seed(): Promise<void> {
       manualRows.push({
         user: user._id,
         category: categoryByName("Groceries")._id,
-        amount: randomAmount(35, 90),
+        amountCents: randomCents(35, 90),
         type: "expense",
         description: "Groceries",
         date: mkDate(3 + week * 7),
@@ -184,26 +186,26 @@ async function seed(): Promise<void> {
 
   const now = new Date();
   await Budget.insertMany([
-    { user: user._id, category: categoryByName("Groceries")._id, limit: 250, month: now.getMonth() + 1, year: now.getFullYear() },
-    { user: user._id, category: categoryByName("Dining Out")._id, limit: 100, month: now.getMonth() + 1, year: now.getFullYear() },
-    { user: user._id, category: categoryByName("Entertainment")._id, limit: 50, month: now.getMonth() + 1, year: now.getFullYear() },
-    { user: user._id, category: categoryByName("Transportation")._id, limit: 150, month: now.getMonth() + 1, year: now.getFullYear() },
+    { user: user._id, category: categoryByName("Groceries")._id, limitCents: 25000, month: now.getMonth() + 1, year: now.getFullYear() },
+    { user: user._id, category: categoryByName("Dining Out")._id, limitCents: 10000, month: now.getMonth() + 1, year: now.getFullYear() },
+    { user: user._id, category: categoryByName("Entertainment")._id, limitCents: 5000, month: now.getMonth() + 1, year: now.getFullYear() },
+    { user: user._id, category: categoryByName("Transportation")._id, limitCents: 15000, month: now.getMonth() + 1, year: now.getFullYear() },
   ]);
 
   // A couple of loans, showcasing both directions and a partial repayment.
   const lentLoan = await loanService.createLoan(user.id, {
     counterparty: "Jordan",
     direction: "lent",
-    principal: 400,
+    principalCents: 40000,
     description: "Covered concert tickets",
     date: daysAgo(20),
   });
-  await loanService.addRepayment(user.id, lentLoan.id, { amount: 150, date: daysAgo(5) });
+  await loanService.addRepayment(user.id, lentLoan.id, { amountCents: 15000, date: daysAgo(5) });
 
   await loanService.createLoan(user.id, {
     counterparty: "Morgan",
     direction: "borrowed",
-    principal: 250,
+    principalCents: 25000,
     description: "Car repair help",
     date: daysAgo(10),
   });

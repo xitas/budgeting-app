@@ -1,11 +1,13 @@
+import bcrypt from "bcrypt";
 import { createHash, randomInt, timingSafeEqual } from "crypto";
 import { Response } from "express";
 import { env } from "../config/env";
-import { User, UserDocument } from "../models/User";
+import { SALT_ROUNDS, User, UserDocument } from "../models/User";
 import { AppError } from "../utils/AppError";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwt";
 import { sendMail } from "../utils/mailer";
 import { seedDefaultCategories } from "./category.service";
+import { assertLoginAllowed, clearLoginFailures, recordLoginFailure } from "./loginThrottle.service";
 
 const REFRESH_COOKIE_NAME = "refreshToken";
 const REFRESH_COOKIE_PATH = "/api/auth";
@@ -55,17 +57,28 @@ export async function signup(email: string, password: string, name: string): Pro
   return { user, ...issueTokens(user) };
 }
 
+// Hashed once, lazily: compared against when no account matches, so a login
+// for an unknown email takes as long as a wrong password for a real one and
+// response timing doesn't reveal which emails have accounts.
+let dummyPasswordHash: Promise<string> | undefined;
+function getDummyPasswordHash(): Promise<string> {
+  dummyPasswordHash ??= bcrypt.hash("no-such-account", SALT_ROUNDS);
+  return dummyPasswordHash;
+}
+
+// Unknown email and wrong password get the identical 401 (and the identical
+// throttling), so the response never says whether an account exists.
 export async function login(email: string, password: string): Promise<AuthResult> {
+  await assertLoginAllowed(email);
+
   const user = await User.findOne({ email: email.toLowerCase() }).select("+passwordHash");
-  if (!user) {
+  const valid = user ? await user.comparePassword(password) : (await bcrypt.compare(password, await getDummyPasswordHash()), false);
+  if (!user || !valid) {
+    await recordLoginFailure(email);
     throw new AppError(401, "Invalid email or password");
   }
 
-  const valid = await user.comparePassword(password);
-  if (!valid) {
-    throw new AppError(401, "Invalid email or password");
-  }
-
+  await clearLoginFailures(email);
   return { user, ...issueTokens(user) };
 }
 
@@ -158,6 +171,8 @@ export async function resetPassword(email: string, code: string, newPassword: st
   // Log out every device: whoever knew the old password shouldn't keep a session.
   user.refreshTokenVersion += 1;
   await user.save();
+  // Proven control of the mailbox: lift any failed-login cooldown.
+  await clearLoginFailures(email);
 }
 
 function clearResetCode(user: UserDocument): void {

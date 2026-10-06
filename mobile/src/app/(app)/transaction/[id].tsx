@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
+import { centsToDecimalString } from "shared";
 import { useState } from "react";
 import { Button } from "../../../components/ui/Button";
 import { CenteredMessage, FormScreen } from "../../../components/ui/layout";
@@ -43,7 +44,7 @@ export default function EditTransactionScreen() {
         defaultValues={{
           type: tx.type,
           category: tx.category.id,
-          amount: tx.amount,
+          amountCents: centsToDecimalString(tx.amountCents),
           description: tx.description,
           date: tx.date.slice(0, 10),
         }}

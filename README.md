@@ -99,7 +99,7 @@ the data is fictional.
 - **Client**: React 19, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, React Hook Form + Zod, Recharts
 - **Server**: Node.js, Express, TypeScript, Mongoose, JWT auth (access + refresh tokens), Zod validation, node-cron
 - **Database**: MongoDB (local via Docker, single-node replica set to support multi-document transactions)
-- **Testing**: Vitest + Supertest (server integration tests against a real MongoDB), Vitest (client unit tests)
+- **Testing**: Vitest + Supertest (server integration tests against a real MongoDB), Vitest (shared, client and mobile unit tests)
 - **Mobile**: Expo SDK 57 (React Native), Expo Router, expo-secure-store, TanStack Query, React Hook Form + Zod, native date picker; charts drawn with plain RN views (no chart library, runs in Expo Go)
 - **Monorepo**: npm workspaces (`client/`, `server/`, `shared/`, `mobile/`)
 
@@ -193,15 +193,49 @@ cd server && npm run seed
 Log in with **demo@example.com** / **password123**. Safe to re-run — it wipes
 and recreates just that one demo account.
 
+### Upgrading an existing database (amounts in cents)
+
+Amounts are stored and sent as integer cents (`amountCents: 125050` for
+1250.50 — see [docs/architecture.md](docs/architecture.md#money-integer-cents)).
+A database created before that change holds decimal amounts; convert it once:
+
+```bash
+# 1. Stop the API (npm run dev / the production process) so nothing writes meanwhile.
+# 2. Optional: an extra full backup of your own, e.g.
+#    docker compose exec mongo mongodump -u root -p changeme --authenticationDatabase admin --db budget-app --out /data/db/dump
+cd server
+npm run migrate:cents -- --dry-run   # report what would change; writes nothing
+npm run migrate:cents                # back up, convert, verify totals
+# 3. Start the API again.
+```
+
+It copies every affected collection to `<name>_backup_<stamp>` first, prints
+each collection's total before and after, and exits non-zero if anything
+doesn't match. Running it again is safe (it reports nothing to migrate). Undo
+with `npm run migrate:cents -- --restore <stamp>`. In production use the
+compiled script: `node dist/migrations/runAmountsToCents.js`. Once you've
+checked the app, the `*_backup_*` collections can be dropped.
+
 ### Testing
 
 ```bash
 npm test
 ```
 
-Runs the server suite (Vitest + Supertest, against a dedicated
-`budget-app-test` database on the same local Mongo container — never your dev
-data) and the client suite. Requires `npm run mongo:up` first.
+Runs every suite: `shared` (money helpers), the server (Vitest + Supertest,
+against a dedicated `budget-app-test` database on the same local Mongo
+container — never your dev data), the web client and the mobile app's unit
+tests. Requires `npm run mongo:up` first (only the server suite needs the
+database).
+
+### Production settings
+
+With `NODE_ENV=production` the API refuses to start on development values
+(placeholder or short JWT secrets, the default database password, a missing
+`MAIL_FROM`/`SMTP_HOST`) and lists what to set. Behind a reverse proxy, set
+`TRUST_PROXY` (e.g. `1`) so login rate limits see the real client IP — see
+[server/.env.example](server/.env.example) and
+[docs/architecture.md](docs/architecture.md#login-protection).
 
 ## Roadmap
 

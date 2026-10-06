@@ -1,29 +1,31 @@
+import type { Cents } from "../money";
+
 export interface DashboardSummary {
-  income: number; // non-loan income only
-  expense: number; // non-loan expense only
-  netLending: number; // loan income − loan expense this month (can be negative)
-  net: number; // income − expense + netLending
+  incomeCents: Cents; // non-loan income only
+  expenseCents: Cents; // non-loan expense only
+  netLendingCents: Cents; // loan income − loan expense this month (can be negative)
+  netCents: Cents; // income − expense + netLending
 }
 
 export interface CategorySpending {
   categoryId: string;
   name: string;
   color: string;
-  amount: number;
+  amountCents: Cents;
 }
 
 export interface MonthlyTrendPoint {
   month: string; // "2026-01"
-  income: number;
-  expense: number;
+  incomeCents: Cents;
+  expenseCents: Cents;
 }
 
 export interface BudgetVsActual {
   id: string;
   category: { id: string; name: string; color: string };
-  limit: number;
+  limitCents: Cents;
   month: number;
   year: number;
-  spent: number;
-  remaining: number;
+  spentCents: Cents;
+  remainingCents: Cents;
 }

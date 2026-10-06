@@ -1,4 +1,5 @@
 import { buttonClass, ghostButtonClass, inputClass } from "../../components/ui/formStyles";
+import { formatMoney } from "shared";
 import { formatDisplayDate } from "../../lib/formatDate";
 import {
   DATE_FORMATS,
@@ -175,7 +176,7 @@ export function MapColumnsStep({
                       <td className="px-3 py-2">{row.description || "—"}</td>
                       <td className={`px-3 py-2 text-right ${row.type === "income" ? "text-green-700" : "text-slate-900"}`}>
                         {row.type === "income" ? "+" : "-"}
-                        {row.amount!.toFixed(2)}
+                        {formatMoney(row.amountCents!)}
                       </td>
                     </>
                   )}

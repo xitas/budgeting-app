@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import type { Transaction, TransactionType } from "shared";
+import { formatSignedAmount, type Transaction, type TransactionType } from "shared";
 import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../../components/ui/layout";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
 import { type Colors } from "../../../components/ui/theme";
@@ -156,8 +156,7 @@ function TransactionRow({ tx, onPress }: { tx: Transaction; onPress: () => void 
         </Text>
       </View>
       <Text style={[styles.amount, isIncome && styles.amountIncome]}>
-        {isIncome ? "+" : "-"}
-        {tx.amount.toFixed(2)}
+        {formatSignedAmount(tx.amountCents, tx.type)}
       </Text>
     </Pressable>
   );

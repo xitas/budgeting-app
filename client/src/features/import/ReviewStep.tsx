@@ -1,4 +1,4 @@
-import type { Category, TransactionType } from "shared";
+import { formatMoney, type Category, type TransactionType } from "shared";
 import { buttonClass, ghostButtonClass, inputClass } from "../../components/ui/formStyles";
 import { useSchemeColor } from "../../context/ThemeContext";
 import { formatDisplayDate } from "../../lib/formatDate";
@@ -131,7 +131,7 @@ export function ReviewStep({
                   </td>
                   <td className={`whitespace-nowrap px-3 py-2 text-right ${type === "income" ? "text-green-700" : "text-slate-900"}`}>
                     {type === "income" ? "+" : "-"}
-                    {row.amount!.toFixed(2)}
+                    {formatMoney(row.amountCents!)}
                   </td>
                   <td className="px-3 py-2">
                     <span className="inline-flex items-center gap-2">

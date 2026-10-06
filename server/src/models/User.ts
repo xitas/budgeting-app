@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { HydratedDocument, Model, Schema, model } from "mongoose";
 
-const SALT_ROUNDS = 12;
+export const SALT_ROUNDS = 12;
 
 export interface IUser {
   email: string;

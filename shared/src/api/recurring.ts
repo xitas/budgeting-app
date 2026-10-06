@@ -1,4 +1,5 @@
 import type { RecurringFrequency, TransactionType } from "../index";
+import type { Cents } from "../money";
 
 export interface RecurringCategoryRef {
   id: string;
@@ -10,7 +11,7 @@ export interface RecurringCategoryRef {
 export interface RecurringTransaction {
   id: string;
   category: RecurringCategoryRef;
-  amount: number;
+  amountCents: Cents;
   type: TransactionType;
   description: string;
   frequency: RecurringFrequency;
@@ -23,7 +24,7 @@ export interface RecurringTransaction {
 
 export interface CreateRecurringInput {
   category: string;
-  amount: number;
+  amountCents: Cents;
   type: TransactionType;
   description?: string;
   frequency: RecurringFrequency;
@@ -33,7 +34,7 @@ export interface CreateRecurringInput {
 }
 
 export interface UpdateRecurringInput {
-  amount?: number;
+  amountCents?: Cents;
   description?: string;
   endDate?: string | null;
   isActive?: boolean;

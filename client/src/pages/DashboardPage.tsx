@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatMoney } from "shared";
 import { BudgetVsActualChart } from "../components/charts/BudgetVsActualChart";
 import { IncomeVsExpenseChart } from "../components/charts/IncomeVsExpenseChart";
 import { SpendingByCategoryChart } from "../components/charts/SpendingByCategoryChart";
@@ -74,17 +75,17 @@ export function DashboardPage() {
       )}
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label="Income" value={(summary?.income ?? 0).toFixed(2)} tone="positive" />
-        <StatTile label="Expense" value={(summary?.expense ?? 0).toFixed(2)} tone="negative" />
+        <StatTile label="Income" value={formatMoney(summary?.incomeCents ?? 0)} tone="positive" />
+        <StatTile label="Expense" value={formatMoney(summary?.expenseCents ?? 0)} tone="negative" />
         <StatTile
           label="Net lending"
-          value={(summary?.netLending ?? 0).toFixed(2)}
-          tone={summary && summary.netLending < 0 ? "negative" : "neutral"}
+          value={formatMoney(summary?.netLendingCents ?? 0)}
+          tone={summary && summary.netLendingCents < 0 ? "negative" : "neutral"}
         />
         <StatTile
           label="Net"
-          value={(summary?.net ?? 0).toFixed(2)}
-          tone={summary && summary.net < 0 ? "negative" : "neutral"}
+          value={formatMoney(summary?.netCents ?? 0)}
+          tone={summary && summary.netCents < 0 ? "negative" : "neutral"}
         />
       </div>
 

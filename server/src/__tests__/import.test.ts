@@ -45,17 +45,17 @@ describe("POST /api/transactions/import", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         rows: [
-          { date: "2026-07-01", type: "income", amount: 3000, description: "Salary", category: income.id },
-          { date: "2026-07-02", type: "expense", amount: 42.5, description: "TESCO STORES", category: expense.id },
+          { date: "2026-07-01", type: "income", amountCents: 300000, description: "Salary", category: income.id },
+          { date: "2026-07-02", type: "expense", amountCents: 4250, description: "TESCO STORES", category: expense.id },
         ],
       });
 
     expect(res.status).toBe(201);
     expect(res.body.imported).toBe(2);
     const saved = await Transaction.find({}).sort({ date: 1 }).lean();
-    expect(saved.map((t) => [t.date.toISOString().slice(0, 10), t.amount, t.source])).toEqual([
-      ["2026-07-01", 3000, "import"],
-      ["2026-07-02", 42.5, "import"],
+    expect(saved.map((t) => [t.date.toISOString().slice(0, 10), t.amountCents, t.source])).toEqual([
+      ["2026-07-01", 300000, "import"],
+      ["2026-07-02", 4250, "import"],
     ]);
   });
 
@@ -67,9 +67,9 @@ describe("POST /api/transactions/import", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         rows: [
-          { date: "2026-07-01", type: "expense", amount: 10, category: expense.id },
+          { date: "2026-07-01", type: "expense", amountCents: 1000, category: expense.id },
           // an expense filed under an income category
-          { date: "2026-07-02", type: "expense", amount: 20, category: income.id },
+          { date: "2026-07-02", type: "expense", amountCents: 2000, category: income.id },
         ],
       });
 
@@ -85,7 +85,7 @@ describe("POST /api/transactions/import", () => {
     const res = await request(app)
       .post("/api/transactions/import")
       .set("Authorization", `Bearer ${bob.token}`)
-      .send({ rows: [{ date: "2026-07-01", type: "expense", amount: 10, category: alice.expense.id }] });
+      .send({ rows: [{ date: "2026-07-01", type: "expense", amountCents: 1000, category: alice.expense.id }] });
 
     expect(res.status).toBe(400);
     expect(await Transaction.countDocuments()).toBe(0);
@@ -96,9 +96,9 @@ describe("POST /api/transactions/import", () => {
     const send = (row: Record<string, unknown>) =>
       request(app).post("/api/transactions/import").set("Authorization", `Bearer ${token}`).send({ rows: [row] });
 
-    expect((await send({ date: "01/07/2026", type: "expense", amount: 10, category: expense.id })).status).toBe(400);
-    expect((await send({ date: "2026-07-01", type: "expense", amount: -10, category: expense.id })).status).toBe(400);
-    expect((await send({ date: "2026-07-01", type: "expense", amount: 10, category: "not-an-id" })).status).toBe(400);
+    expect((await send({ date: "01/07/2026", type: "expense", amountCents: 1000, category: expense.id })).status).toBe(400);
+    expect((await send({ date: "2026-07-01", type: "expense", amountCents: -1000, category: expense.id })).status).toBe(400);
+    expect((await send({ date: "2026-07-01", type: "expense", amountCents: 1000, category: "not-an-id" })).status).toBe(400);
   });
 
   it("accepts a large import above the default 100kb JSON limit", async () => {
@@ -106,7 +106,7 @@ describe("POST /api/transactions/import", () => {
     const rows = Array.from({ length: 2000 }, (_, i) => ({
       date: `2026-${String((i % 12) + 1).padStart(2, "0")}-15`,
       type: "expense",
-      amount: 1 + i,
+      amountCents: (1 + i) * 100,
       description: `Card payment #${i} at a shop with a fairly long merchant description`,
       category: expense.id,
     }));
@@ -134,17 +134,17 @@ describe("POST /api/transactions/import/check", () => {
     await request(app)
       .post("/api/transactions")
       .set("Authorization", `Bearer ${token}`)
-      .send({ category: expense.id, type: "expense", amount: 42.5, description: "Tesco  Stores", date: "2026-07-02" });
+      .send({ category: expense.id, type: "expense", amountCents: 4250, description: "Tesco  Stores", date: "2026-07-02" });
 
     const res = await request(app)
       .post("/api/transactions/import/check")
       .set("Authorization", `Bearer ${token}`)
       .send({
         rows: [
-          { date: "2026-07-02", type: "expense", amount: 42.5, description: "TESCO STORES" }, // same (case/space-insensitive)
-          { date: "2026-07-02", type: "expense", amount: 42.51, description: "TESCO STORES" }, // different amount
-          { date: "2026-07-03", type: "expense", amount: 42.5, description: "TESCO STORES" }, // different day
-          { date: "2026-07-02", type: "income", amount: 42.5, description: "TESCO STORES" }, // different type
+          { date: "2026-07-02", type: "expense", amountCents: 4250, description: "TESCO STORES" }, // same (case/space-insensitive)
+          { date: "2026-07-02", type: "expense", amountCents: 4251, description: "TESCO STORES" }, // different amount
+          { date: "2026-07-03", type: "expense", amountCents: 4250, description: "TESCO STORES" }, // different day
+          { date: "2026-07-02", type: "income", amountCents: 4250, description: "TESCO STORES" }, // different type
         ],
       });
 
@@ -154,7 +154,7 @@ describe("POST /api/transactions/import/check", () => {
 
   it("finds a re-import of just-imported rows", async () => {
     const { token, expense } = await signUp("reimport@example.com");
-    const rows = [{ date: "2026-08-31", type: "expense", amount: 9.99, description: "Streaming", category: expense.id }];
+    const rows = [{ date: "2026-08-31", type: "expense", amountCents: 999, description: "Streaming", category: expense.id }];
     await request(app).post("/api/transactions/import").set("Authorization", `Bearer ${token}`).send({ rows });
 
     const res = await request(app).post("/api/transactions/import/check").set("Authorization", `Bearer ${token}`).send({ rows });
