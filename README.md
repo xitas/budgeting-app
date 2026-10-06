@@ -15,32 +15,84 @@ with charts.
 Built as a learning project for MongoDB/Mongoose (schema design, indexes,
 aggregation pipelines) and as a portfolio piece.
 
+<p align="center">
+  <img src="docs/screenshots/web/desktop-light-dashboard.png" alt="Web dashboard" width="660">
+  &nbsp;
+  <img src="docs/screenshots/mobile/dashboard-light.png" alt="Mobile dashboard" width="190">
+</p>
+
 ## Screenshots
 
-**Dashboard** — month-scoped KPIs and three aggregation-backed charts (spending
-by category, income vs expense trend, budget vs actual), each with a
-"view as table" accessibility twin.
+All screenshots use the seeded demo account (`cd server && npm run seed`), so
+the data is fictional.
 
-![Dashboard](docs/screenshots/dashboard.png)
+### Web
 
-**Transactions + Budgets/Categories/Recurring workspace** — one page, full
-width: the transactions table is always the base view on the left, with a
-tabbed panel on the right. Adding an item opens a popup; editing happens
-inline in the row.
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-dashboard.png" alt="Dashboard" width="400"><br><sub><b>Dashboard</b>: month-scoped KPIs and three aggregation-backed charts, each with a "view as table" twin</sub></td>
+    <td align="center"><img src="docs/screenshots/web/desktop-dark-dashboard.png" alt="Dashboard, dark mode" width="400"><br><sub><b>Dark mode</b>: follows the system by default, with a System / Light / Dark switch</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-transactions.png" alt="Transactions and budgets" width="400"><br><sub><b>Transactions + budgets</b>: the table is always on the left, with a tabbed panel on the right</sub></td>
+    <td align="center"><img src="docs/screenshots/web/desktop-dark-transactions.png" alt="Transactions, dark mode" width="400"><br><sub><b>Transactions (dark)</b>: filter by type, category and date range; CSV import/export</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-add-transaction.png" alt="Add transaction" width="400"><br><sub><b>Add transaction</b>: adding opens a popup</sub></td>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-edit-transaction.png" alt="Edit transaction" width="400"><br><sub><b>Edit transaction</b>: editing happens inline in the row</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-recurring.png" alt="Recurring transactions" width="400"><br><sub><b>Recurring</b>: rules like "Every month" generate real transactions, with "run now" and pause/resume</sub></td>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-loans.png" alt="Loans" width="400"><br><sub><b>Loans</b>: lent or borrowed money as linked transactions, with repayments and write-off</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-categories.png" alt="Categories" width="400"><br><sub><b>Categories</b>: names and colors for income and expenses</sub></td>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-import.png" alt="CSV import" width="400"><br><sub><b>CSV import</b>: column mapping, format detection, duplicate check and review</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web/desktop-light-login.png" alt="Login" width="400"><br><sub><b>Login</b>: with signup and emailed-code password reset</sub></td>
+    <td></td>
+  </tr>
+</table>
 
-![Workspace](docs/screenshots/transactions.png)
+**Responsive layout** (390 × 844):
 
-**Recurring transactions** — a template rule (e.g. "Every month") generates
-real transactions over time, with manual "run now" and pause/resume.
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web/phone-light-dashboard.png" alt="Dashboard on a phone" width="250"><br><sub>Dashboard</sub></td>
+    <td align="center"><img src="docs/screenshots/web/phone-light-transactions.png" alt="Transactions on a phone" width="250"><br><sub>Transactions</sub></td>
+    <td align="center"><img src="docs/screenshots/web/phone-light-budgets.png" alt="Budgets on a phone" width="250"><br><sub>Budgets panel, stacked below the table</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/web/phone-dark-dashboard.png" alt="Dashboard on a phone, dark mode" width="250"><br><sub>Dashboard (dark)</sub></td>
+    <td align="center"><img src="docs/screenshots/web/phone-dark-transactions.png" alt="Transactions on a phone, dark mode" width="250"><br><sub>Transactions (dark)</sub></td>
+    <td align="center"><img src="docs/screenshots/web/phone-dark-budgets.png" alt="Budgets on a phone, dark mode" width="250"><br><sub>Budgets (dark)</sub></td>
+  </tr>
+</table>
 
-![Recurring](docs/screenshots/recurring.png)
+### Mobile
 
-**Loans** — money lent to or borrowed from someone, tracked as a real linked
-transaction (so it affects actual balance, not a side ledger), with partial
-repayments, a running outstanding balance, and write-off for debt that won't
-be repaid.
+<!-- Mobile images are placeholders until real captures from Expo Go replace
+     them. Overwrite each file in docs/screenshots/mobile/ (same name, under
+     300 KB) and this table needs no changes. -->
 
-![Loans](docs/screenshots/loans.png)
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/mobile/dashboard-light.png" alt="Mobile dashboard" width="250"><br><sub><b>Dashboard</b>: KPIs and charts drawn with plain React Native views</sub></td>
+    <td align="center"><img src="docs/screenshots/mobile/dashboard-dark.png" alt="Mobile dashboard, dark mode" width="250"><br><sub><b>Dark mode</b></sub></td>
+    <td align="center"><img src="docs/screenshots/mobile/transactions.png" alt="Mobile transactions" width="250"><br><sub><b>Transactions</b>: infinite scroll, filters, CSV export via the share sheet</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/mobile/add-transaction.png" alt="Mobile add transaction" width="250"><br><sub><b>Add transaction</b>: native date picker</sub></td>
+    <td align="center"><img src="docs/screenshots/mobile/budgets.png" alt="Mobile budgets" width="250"><br><sub><b>Budgets</b>: monthly limits per category</sub></td>
+    <td align="center"><img src="docs/screenshots/mobile/recurring.png" alt="Mobile recurring" width="250"><br><sub><b>Recurring</b>: rules that add transactions automatically</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/mobile/loans.png" alt="Mobile loans" width="250"><br><sub><b>Loans</b>: repayments and outstanding balance</sub></td>
+    <td align="center"><img src="docs/screenshots/mobile/more.png" alt="Mobile more tab" width="250"><br><sub><b>More</b>: budgets, categories, recurring, appearance and log out</sub></td>
+    <td></td>
+  </tr>
+</table>
 
 ## Tech stack
 
@@ -116,6 +168,10 @@ npm run dev
    ```
 
 3. Scan the QR code it prints (iOS: Camera app; Android: from Expo Go).
+
+The mobile app runs on a phone (or an Android emulator / iOS simulator) only.
+Expo's web target isn't set up: it would need `react-native-web`, and
+`expo-secure-store` has no browser implementation.
 
 The app finds the API automatically: it uses the same LAN address Expo serves
 the bundle from, on port 4000. To point it somewhere else (e.g. a deployed
