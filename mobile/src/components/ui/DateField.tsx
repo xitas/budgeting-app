@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { formatDisplayDate, isoToLocalDate, localDateToIso } from "../../lib/dates";
 import { radius, type Colors } from "./theme";
-import { useThemedStyles } from "../../context/ThemeContext";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 
 interface DateFieldProps {
   label: string;
@@ -18,6 +18,7 @@ interface DateFieldProps {
 // calendar under the field.
 export function DateField({ label, value, onChange, error, placeholder = "Pick a date", onClear }: DateFieldProps) {
   const styles = useThemedStyles(makeStyles);
+  const { scheme } = useTheme();
   const [iosOpen, setIosOpen] = useState(false);
   const current = value ? isoToLocalDate(value) : new Date();
 
@@ -56,6 +57,9 @@ export function DateField({ label, value, onChange, error, placeholder = "Pick a
           value={current}
           mode="date"
           display="inline"
+          // Match the app theme even when it differs from the OS setting, so the
+          // calendar never draws dark text on the dark screen (or vice versa).
+          themeVariant={scheme}
           onValueChange={(_event, date) => {
             onChange(localDateToIso(date));
             setIosOpen(false);

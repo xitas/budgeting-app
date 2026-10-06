@@ -15,8 +15,15 @@
    surface — slate-50 (page) goes darkest, slate-900 (primary text) goes
    lightest — so existing classes keep their role in both modes. Status tints
    get dark equivalents with enough contrast on the dark surface. */
+/* color-scheme tells the browser which palette to draw native UI in —
+   select option lists, date-picker popups, checkboxes, scrollbars. Set
+   explicitly for both themes, so the manual toggle wins over the OS. */
+:root {
+  color-scheme: light;
+}
+
 .dark {
-  color-scheme: dark; /* native inputs, date pickers, selects, scrollbars */
+  color-scheme: dark;
 
   --color-surface: #161f2e;
   --color-link: #60a5fa;
@@ -47,4 +54,48 @@ body {
   margin: 0;
   background-color: var(--color-slate-50);
   color: var(--color-slate-900);
+}
+
+/* Form controls get explicit theme colors instead of relying on browser
+   defaults: a select left transparent inherits the light dark-mode text, but
+   Chrome/Edge on Windows draw its option list on white — light-on-white,
+   unreadable. Options carry the same colors because the open list is
+   painted from them, not from the page behind. */
+@layer base {
+  input,
+  select,
+  textarea {
+    background-color: var(--color-surface);
+    color: var(--color-slate-900);
+  }
+
+  select option,
+  select optgroup {
+    background-color: var(--color-surface);
+    color: var(--color-slate-900);
+  }
+
+  select option:disabled {
+    color: var(--color-slate-500);
+  }
+
+  /* Placeholders: slate-500 keeps >= 4.5:1 on the surface in both themes. */
+  ::placeholder {
+    color: var(--color-slate-500);
+    opacity: 1;
+  }
+
+  /* Chrome paints autofilled fields pale yellow/blue with dark text, which
+     ignores the theme; cover it with the surface color and keep theme text.
+     The long transition keeps Chrome from flashing its own colors back. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  textarea:-webkit-autofill {
+    -webkit-text-fill-color: var(--color-slate-900);
+    caret-color: var(--color-slate-900);
+    box-shadow: 0 0 0 1000px var(--color-surface) inset;
+    transition: background-color 600000s 0s;
+  }
 }
