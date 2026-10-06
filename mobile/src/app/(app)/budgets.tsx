@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import type { Budget } from "shared";
-import { CenteredMessage, Fab } from "../../components/ui/layout";
+import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../components/ui/layout";
 import { Meter } from "../../components/ui/Meter";
 import { MonthSwitcher } from "../../components/ui/MonthSwitcher";
 import { radius, type Colors } from "../../components/ui/theme";
@@ -43,7 +43,6 @@ export default function BudgetsScreen() {
             <CenteredMessage>No budgets for this month. Tap + to set a limit for a category.</CenteredMessage>
           )
         }
-        ListFooterComponent={<View style={styles.fabSpace} />}
         refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => void query.refetch()} />}
       />
       <Fab
@@ -81,7 +80,7 @@ function BudgetCard({ budget, onPress }: { budget: Budget; onPress: () => void }
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
     flex: { flex: 1 },
-    list: { padding: 16, gap: 12 },
+    list: { padding: 16, gap: 12, paddingBottom: FAB_CLEARANCE },
     card: {
       backgroundColor: colors.surface,
       borderWidth: 1,
@@ -97,5 +96,4 @@ const makeStyles = (colors: Colors) =>
     amounts: { fontSize: 14, color: colors.text, fontVariant: ["tabular-nums"] },
     status: { fontSize: 13, color: colors.textMuted },
     statusOver: { color: colors.danger, fontWeight: "600" },
-    fabSpace: { height: 72 },
   });

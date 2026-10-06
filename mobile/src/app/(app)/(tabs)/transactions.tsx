@@ -3,7 +3,7 @@ import { router, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Transaction, TransactionType } from "shared";
-import { CenteredMessage, Fab } from "../../../components/ui/layout";
+import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../../components/ui/layout";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
 import { type Colors } from "../../../components/ui/theme";
 import { useCategories } from "../../../features/categories/hooks";
@@ -86,6 +86,7 @@ export default function TransactionsScreen() {
       <FlatList
         data={items}
         keyExtractor={(tx) => tx.id}
+        contentContainerStyle={styles.list}
         renderItem={({ item }) => <TransactionRow tx={item} onPress={() => openTransaction(item)} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
@@ -121,7 +122,7 @@ export default function TransactionsScreen() {
             <CenteredMessage>No transactions found.</CenteredMessage>
           )
         }
-        ListFooterComponent={query.isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={colors.link} /> : <View style={styles.fabSpace} />}
+        ListFooterComponent={query.isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={colors.link} /> : null}
         onEndReached={() => {
           if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
         }}
@@ -180,6 +181,7 @@ function FilterChip({ label, color, selected, onPress }: { label: string; color?
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
     flex: { flex: 1 },
+    list: { paddingBottom: FAB_CLEARANCE },
     filters: { padding: 16, gap: 12 },
     chips: { gap: 8 },
     chip: {
@@ -207,6 +209,5 @@ const makeStyles = (colors: Colors) =>
     amountIncome: { color: colors.positive },
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
     footer: { padding: 16 },
-    fabSpace: { height: 88 },
     headerButton: { marginRight: 16 },
   });

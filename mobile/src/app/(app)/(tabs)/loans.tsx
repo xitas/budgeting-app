@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import type { Loan } from "shared";
-import { CenteredMessage, Fab } from "../../../components/ui/layout";
+import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../../components/ui/layout";
 import { Meter } from "../../../components/ui/Meter";
 import { radius, type Colors } from "../../../components/ui/theme";
 import { useLoans } from "../../../features/loans/hooks";
@@ -32,7 +32,6 @@ export default function LoansScreen() {
             <CenteredMessage>No loans tracked yet. Tap + to record money you lent or borrowed.</CenteredMessage>
           )
         }
-        ListFooterComponent={<View style={styles.fabSpace} />}
         refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => void query.refetch()} />}
       />
       <Fab label="Add loan" onPress={() => router.push("/loan/new")} />
@@ -72,7 +71,7 @@ function LoanCard({ loan, onPress }: { loan: Loan; onPress: () => void }) {
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
     flex: { flex: 1 },
-    list: { padding: 16, gap: 12 },
+    list: { padding: 16, gap: 12, paddingBottom: FAB_CLEARANCE },
     card: {
       backgroundColor: colors.surface,
       borderWidth: 1,
@@ -89,5 +88,4 @@ const makeStyles = (colors: Colors) =>
     footer: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
     meta: { flex: 1, fontSize: 13, color: colors.textMuted },
     amounts: { fontSize: 13, color: colors.text, fontVariant: ["tabular-nums"] },
-    fabSpace: { height: 72 },
   });

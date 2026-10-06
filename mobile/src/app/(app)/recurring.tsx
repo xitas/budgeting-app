@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import type { RecurringTransaction } from "shared";
-import { CenteredMessage, Fab } from "../../components/ui/layout";
+import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../components/ui/layout";
 import { radius, type Colors } from "../../components/ui/theme";
 import { describeFrequency } from "../../features/recurring/describe";
 import { useRecurring, useRunRecurringNow } from "../../features/recurring/hooks";
@@ -49,7 +49,6 @@ export default function RecurringScreen() {
             <CenteredMessage>No recurring rules yet. Tap + to add rent, salary, subscriptions...</CenteredMessage>
           )
         }
-        ListFooterComponent={<View style={styles.fabSpace} />}
         refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => void query.refetch()} />}
       />
       <Fab label="Add recurring transaction" onPress={() => router.push("/recurring-rule/new")} />
@@ -68,43 +67,56 @@ function RecurringCard({ rule, runMessage, onPress, onRunNow }: RecurringCardPro
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const isIncome = rule.type === "income";
+  const title = rule.description || rule.category.name;
+  // "Run now" is a sibling laid over the card's bottom-right corner, not a
+  // child: nested pressables merge into one control for screen readers (and
+  // nest <button>s on web).
   return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed, !rule.isActive && styles.cardPaused]}
-    >
-      <View style={styles.header}>
-        <View style={[styles.dot, { backgroundColor: schemeColor(rule.category.color) }]} />
-        <Text style={styles.name} numberOfLines={1}>
-          {rule.description || rule.category.name}
-          {!rule.isActive ? <Text style={styles.paused}> (paused)</Text> : null}
+    <View style={!rule.isActive && styles.cardPaused}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="Opens the edit form"
+        onPress={onPress}
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      >
+        <View style={styles.header}>
+          <View style={[styles.dot, { backgroundColor: schemeColor(rule.category.color) }]} />
+          <Text style={styles.name} numberOfLines={1}>
+            {title}
+            {!rule.isActive ? <Text style={styles.paused}> (paused)</Text> : null}
+          </Text>
+          <Text style={[styles.amount, isIncome && styles.amountIncome]}>
+            {isIncome ? "+" : "-"}
+            {rule.amount.toFixed(2)}
+          </Text>
+        </View>
+        <Text style={styles.meta}>
+          {describeFrequency(rule.frequency, rule.interval)} · started {formatDisplayDate(rule.startDate)}
+          {rule.endDate ? ` · ends ${formatDisplayDate(rule.endDate)}` : ""}
         </Text>
-        <Text style={[styles.amount, isIncome && styles.amountIncome]}>
-          {isIncome ? "+" : "-"}
-          {rule.amount.toFixed(2)}
-        </Text>
-      </View>
-      <Text style={styles.meta}>
-        {describeFrequency(rule.frequency, rule.interval)} · started {formatDisplayDate(rule.startDate)}
-        {rule.endDate ? ` · ends ${formatDisplayDate(rule.endDate)}` : ""}
-      </Text>
-      <View style={styles.footer}>
-        <Text style={styles.meta}>{runMessage ?? ""}</Text>
-        {rule.isActive ? (
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={onRunNow}>
-            <Text style={styles.runNow}>Run now</Text>
-          </Pressable>
-        ) : null}
-      </View>
-    </Pressable>
+        <View style={[styles.footer, rule.isActive && styles.footerWithRunNow]}>
+          <Text style={styles.meta}>{runMessage ?? ""}</Text>
+        </View>
+      </Pressable>
+      {rule.isActive ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Run now: ${title}`}
+          hitSlop={8}
+          onPress={onRunNow}
+          style={styles.runNowButton}
+        >
+          <Text style={styles.runNow}>Run now</Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
     flex: { flex: 1 },
-    list: { padding: 16, gap: 12 },
+    list: { padding: 16, gap: 12, paddingBottom: FAB_CLEARANCE },
     card: {
       backgroundColor: colors.surface,
       borderWidth: 1,
@@ -123,6 +135,8 @@ const makeStyles = (colors: Colors) =>
     amountIncome: { color: colors.positive },
     meta: { fontSize: 13, color: colors.textMuted },
     footer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", minHeight: 24 },
+    footerWithRunNow: { paddingRight: 80 }, // keeps the run message clear of the overlaid button
+    // card padding (16) + border (1), so it sits exactly where the footer row ends
+    runNowButton: { position: "absolute", right: 17, bottom: 17, height: 24, justifyContent: "center" },
     runNow: { fontSize: 14, color: colors.link, fontWeight: "500" },
-    fabSpace: { height: 72 },
   });

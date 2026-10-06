@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { Pressable, RefreshControl, SectionList, StyleSheet, Text, View } from "react-native";
 import type { Category } from "shared";
-import { CenteredMessage, Fab, SectionTitle } from "../../components/ui/layout";
+import { CenteredMessage, Fab, FAB_CLEARANCE, SectionTitle } from "../../components/ui/layout";
 import { type Colors } from "../../components/ui/theme";
 import { useCategories } from "../../features/categories/hooks";
 import { extractErrorMessage } from "../../lib/errors";
@@ -39,7 +39,7 @@ export default function CategoriesScreen() {
             <CenteredMessage>No categories yet.</CenteredMessage>
           )
         }
-        ListFooterComponent={<View style={styles.fabSpace} />}
+        contentContainerStyle={styles.list}
         stickySectionHeadersEnabled={false}
         refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => void query.refetch()} />}
       />
@@ -63,6 +63,7 @@ function CategoryRow({ category, onPress }: { category: Category; onPress: () =>
 const makeStyles = (colors: Colors) =>
   StyleSheet.create({
     flex: { flex: 1 },
+    list: { paddingBottom: FAB_CLEARANCE },
     sectionHeader: { paddingHorizontal: 16, paddingTop: 20, paddingBottom: 8 },
     row: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14, backgroundColor: colors.surface },
     rowPressed: { backgroundColor: colors.border },
@@ -70,5 +71,4 @@ const makeStyles = (colors: Colors) =>
     name: { flex: 1, fontSize: 15, color: colors.text },
     tag: { fontSize: 12, color: colors.textSubtle },
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
-    fabSpace: { height: 88 },
   });

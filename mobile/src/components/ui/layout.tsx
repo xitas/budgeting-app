@@ -41,6 +41,13 @@ export function CenteredMessage({ children, loading }: { children?: string; load
   );
 }
 
+const FAB_SIZE = 56;
+const FAB_OFFSET = 20;
+
+// Bottom padding for a list under a Fab, so its last row scrolls fully clear
+// of the button (button height + its offset + a gap).
+export const FAB_CLEARANCE = FAB_OFFSET + FAB_SIZE + 16;
+
 // Round "+" in the bottom-right corner of list screens.
 export function Fab({ label, onPress }: { label: string; onPress: () => void }) {
   const styles = useThemedStyles(makeStyles);
@@ -76,11 +83,11 @@ const makeStyles = (colors: Colors) =>
     message: { fontSize: 14, color: colors.textSubtle, textAlign: "center" },
     fab: {
       position: "absolute",
-      right: 20,
-      bottom: 20,
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      right: FAB_OFFSET,
+      bottom: FAB_OFFSET,
+      width: FAB_SIZE,
+      height: FAB_SIZE,
+      borderRadius: FAB_SIZE / 2,
       backgroundColor: colors.primary,
       alignItems: "center",
       justifyContent: "center",
