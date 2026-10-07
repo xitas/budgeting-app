@@ -40,7 +40,24 @@ export const resetPasswordSchema = z.object({
   }),
 });
 
+export const sixDigitCode = z.string().regex(/^\d{6}$/, "Code must be 6 digits");
+
+export const verifyEmailSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    code: sixDigitCode,
+  }),
+});
+
+export const resendVerificationSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+  }),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>["body"];
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>["body"];
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>["body"];
 export type LoginInput = z.infer<typeof loginSchema>["body"];
 export type RefreshInput = z.infer<typeof refreshSchema>["body"];
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>["body"];

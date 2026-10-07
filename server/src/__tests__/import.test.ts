@@ -2,6 +2,7 @@ import request from "supertest";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../app";
 import { Transaction } from "../models/Transaction";
+import { signUpAndLogin } from "./helpers";
 import { clearTestDb, startTestDb, stopTestDb } from "./testDb";
 
 const app = createApp();
@@ -25,8 +26,7 @@ interface Category {
 }
 
 async function signUp(email: string): Promise<{ token: string; expense: Category; income: Category }> {
-  const res = await request(app).post("/api/auth/signup").send({ email, password: "password123", name: "Import Test" });
-  const token = res.body.accessToken as string;
+  const { token } = await signUpAndLogin(app, email);
   const cats = await request(app).get("/api/categories").set("Authorization", `Bearer ${token}`);
   const categories = cats.body.categories as Category[];
   return {

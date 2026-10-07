@@ -31,7 +31,7 @@ export function SignupPage() {
     setServerError(null);
     try {
       await signup(values.email, values.password, values.name);
-      navigate("/");
+      navigate(`/verify-email?email=${encodeURIComponent(values.email)}`, { state: { email: values.email } });
     } catch (err) {
       setServerError(extractErrorMessage(err));
     }

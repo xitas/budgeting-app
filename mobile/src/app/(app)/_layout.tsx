@@ -19,6 +19,8 @@ export default function AppLayout() {
       <Stack.Screen name="categories" options={{ title: "Categories" }} />
       <Stack.Screen name="recurring" options={{ title: "Recurring" }} />
 
+      <Stack.Screen name="account/verify-email" options={{ presentation: "modal", title: "Verify your email" }} />
+
       <Stack.Screen name="transaction/new" options={{ presentation: "modal", title: "Add transaction" }} />
       <Stack.Screen name="transaction/[id]" options={{ presentation: "modal", title: "Edit transaction" }} />
       <Stack.Screen name="loan/new" options={{ presentation: "modal", title: "Add loan" }} />

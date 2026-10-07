@@ -1,7 +1,8 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import type { ComponentProps } from "react";
-import type { ColorValue } from "react-native";
+import { View, type ColorValue } from "react-native";
+import { useShowsVerifyBanner, VerifyEmailBanner } from "../../../components/VerifyEmailBanner";
 import { useColors } from "../../../context/ThemeContext";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
@@ -14,24 +15,30 @@ function tabIcon(name: IconName, focusedName: IconName) {
 
 export default function TabsLayout() {
   const colors = useColors();
+  const banner = useShowsVerifyBanner();
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: colors.link,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarInactiveTintColor: colors.textSubtle,
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
-        sceneStyle: { backgroundColor: colors.background },
-      }}
-    >
-      <Tabs.Screen name="index" options={{ title: "Dashboard", tabBarIcon: tabIcon("pie-chart-outline", "pie-chart") }} />
-      <Tabs.Screen
-        name="transactions"
-        options={{ title: "Transactions", tabBarIcon: tabIcon("list-outline", "list") }}
-      />
-      <Tabs.Screen name="loans" options={{ title: "Loans", tabBarIcon: tabIcon("people-outline", "people") }} />
-      <Tabs.Screen name="more" options={{ title: "More", tabBarIcon: tabIcon("ellipsis-horizontal-circle-outline", "ellipsis-horizontal-circle") }} />
-    </Tabs>
+    <View style={{ flex: 1 }}>
+      <VerifyEmailBanner />
+      <Tabs
+        screenOptions={{
+          // The banner already covers the status bar when it shows.
+          ...(banner ? { headerStatusBarHeight: 0 } : {}),
+          tabBarActiveTintColor: colors.link,
+          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+          tabBarInactiveTintColor: colors.textSubtle,
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.text,
+          sceneStyle: { backgroundColor: colors.background },
+        }}
+      >
+        <Tabs.Screen name="index" options={{ title: "Dashboard", tabBarIcon: tabIcon("pie-chart-outline", "pie-chart") }} />
+        <Tabs.Screen
+          name="transactions"
+          options={{ title: "Transactions", tabBarIcon: tabIcon("list-outline", "list") }}
+        />
+        <Tabs.Screen name="loans" options={{ title: "Loans", tabBarIcon: tabIcon("people-outline", "people") }} />
+        <Tabs.Screen name="more" options={{ title: "More", tabBarIcon: tabIcon("ellipsis-horizontal-circle-outline", "ellipsis-horizontal-circle") }} />
+      </Tabs>
+    </View>
   );
 }

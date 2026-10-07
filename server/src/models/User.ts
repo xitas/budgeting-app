@@ -12,7 +12,20 @@ export interface IUser {
   resetCodeHash?: string;
   resetCodeExpiresAt?: Date;
   resetCodeAttempts: number;
+  // Missing on accounts created before email verification existed — those
+  // count as verified (see toJSON). New sign-ups start at false.
+  emailVerified?: boolean;
   currency: CurrencyCode;
+  pendingEmail?: string;
+  // One-time code for the email address: "verify" (sign-up) or "change"
+  // (confirming pendingEmail). Same storage rules as the reset code.
+  emailCodeHash?: string;
+  emailCodeExpiresAt?: Date;
+  emailCodeAttempts: number;
+  emailCodePurpose?: "verify" | "change";
+  // Last "someone tried to sign up with your address" notice, to avoid
+  // flooding an inbox with them.
+  signupNoticeSentAt?: Date;
 }
 
 export interface IUserMethods {
@@ -64,7 +77,14 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: 0,
       select: false,
     },
+    emailVerified: { type: Boolean },
     currency: { type: String, enum: CURRENCY_CODES, default: DEFAULT_CURRENCY },
+    pendingEmail: { type: String, lowercase: true, trim: true },
+    emailCodeHash: { type: String, select: false },
+    emailCodeExpiresAt: { type: Date, select: false },
+    emailCodeAttempts: { type: Number, default: 0, select: false },
+    emailCodePurpose: { type: String, enum: ["verify", "change"], select: false },
+    signupNoticeSentAt: { type: Date, select: false },
   },
   { timestamps: true }
 );
@@ -93,8 +113,21 @@ userSchema.method("comparePassword", function comparePassword(this: UserDocument
 userSchema.set("toJSON", {
   virtuals: true,
   transform: (_doc, ret) => {
-    const { passwordHash, resetCodeHash, resetCodeExpiresAt, resetCodeAttempts, __v, _id, ...rest } = ret;
-    return rest;
+    const {
+      passwordHash,
+      resetCodeHash,
+      resetCodeExpiresAt,
+      resetCodeAttempts,
+      emailCodeHash,
+      emailCodeExpiresAt,
+      emailCodeAttempts,
+      emailCodePurpose,
+      signupNoticeSentAt,
+      __v,
+      _id,
+      ...rest
+    } = ret;
+    return { ...rest, emailVerified: rest.emailVerified !== false };
   },
 });
 

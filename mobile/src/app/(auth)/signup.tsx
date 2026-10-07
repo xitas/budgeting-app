@@ -36,6 +36,7 @@ export default function SignupScreen() {
     setServerError(null);
     try {
       await signup(values.email, values.password, values.name);
+      router.push({ pathname: "/verify-email", params: { email: values.email.trim() } });
     } catch (err) {
       setServerError(extractErrorMessage(err));
     }

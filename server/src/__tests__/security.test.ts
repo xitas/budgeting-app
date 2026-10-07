@@ -41,8 +41,8 @@ describe("per-IP rate limits on login and signup", () => {
   it("limits sign-ups per IP", async () => {
     const app = createApp({ authRateLimits: tightLimits });
     const signup = (n: number) => request(app).post("/api/auth/signup").send({ email: `new${n}@example.com`, password: "password123", name: "New" });
-    expect((await signup(1)).status).toBe(201);
-    expect((await signup(2)).status).toBe(201);
+    expect((await signup(1)).status).toBe(202);
+    expect((await signup(2)).status).toBe(202);
     const limited = await signup(3);
     expect(limited.status).toBe(429);
     expect(limited.body.message).toMatch(/sign-up attempts/);

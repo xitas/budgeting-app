@@ -5,5 +5,6 @@ export default defineConfig({
     environment: "node",
     globals: true,
     fileParallelism: false, // tests share one Mongo test database
+    setupFiles: ["src/__tests__/setup.ts"],
   },
 });

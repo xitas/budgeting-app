@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { NavBar } from "./NavBar";
+import { VerifyEmailBanner } from "./VerifyEmailBanner";
 
 export function ProtectedLayout() {
   const { user, isLoading } = useAuth();
@@ -16,6 +17,7 @@ export function ProtectedLayout() {
   return (
     <div className="min-h-screen bg-slate-50">
       <NavBar />
+      <VerifyEmailBanner />
       <Outlet />
     </div>
   );

@@ -20,6 +20,9 @@ export const lightColors = {
   positive: "#15803d", // green-700
   successBg: "#f0fdf4", // green-50
   successText: "#166534", // green-800
+  noticeBg: "#fffbeb", // amber-50 — "verify your email" banner
+  noticeBorder: "#fcd34d", // amber-300
+  noticeText: "#78350f", // amber-900
   chartCursor: "#f4f4f2", // selected-band wash behind a tapped chart group
 };
 
@@ -43,6 +46,9 @@ export const darkColors: Colors = {
   positive: "#4ade80",
   successBg: "#0f2e1c",
   successText: "#86efac",
+  noticeBg: "#3a2a06",
+  noticeBorder: "#78520c",
+  noticeText: "#fde68a",
   chartCursor: "#1f2a3c",
 };
 

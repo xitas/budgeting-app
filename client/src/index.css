@@ -45,6 +45,12 @@
   --color-red-200: #7f1d1d;
   --color-red-600: #f87171;
 
+  /* Notice banner (e.g. "verify your email"). */
+  --color-amber-50: #3a2a06;
+  --color-amber-300: #78520c;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+
   --color-green-50: #0f2e1c;
   --color-green-700: #4ade80;
   --color-green-800: #86efac;

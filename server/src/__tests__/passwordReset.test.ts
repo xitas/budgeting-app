@@ -42,6 +42,7 @@ afterAll(async () => {
 describe("password reset", () => {
   it("responds identically for an unknown email and sends nothing", async () => {
     await request(app).post("/api/auth/signup").send(credentials);
+    vi.mocked(sendMail).mockClear(); // drop the sign-up verification email
 
     const known = await request(app).post("/api/auth/forgot-password").send({ email: credentials.email });
     const unknown = await request(app).post("/api/auth/forgot-password").send({ email: "nobody@example.com" });
@@ -61,8 +62,9 @@ describe("password reset", () => {
   });
 
   it("resets the password with a valid code, logs out other sessions, and burns the code", async () => {
-    const signupRes = await request(app).post("/api/auth/signup").send(credentials);
-    const oldRefreshCookie = signupRes.headers["set-cookie"];
+    await request(app).post("/api/auth/signup").send(credentials);
+    const loginRes = await request(app).post("/api/auth/login").send({ email: credentials.email, password: credentials.password });
+    const oldRefreshCookie = loginRes.headers["set-cookie"];
     const code = await requestCode();
 
     const resetRes = await request(app)
@@ -114,10 +116,19 @@ describe("password reset", () => {
 
   it("does not send a second code within the resend cooldown", async () => {
     await request(app).post("/api/auth/signup").send(credentials);
+    vi.mocked(sendMail).mockClear();
     await requestCode();
     await request(app).post("/api/auth/forgot-password").send({ email: credentials.email });
 
     expect(sendMail).toHaveBeenCalledTimes(1);
+  });
+
+  it("marks the email verified, since the code arrived by email", async () => {
+    await request(app).post("/api/auth/signup").send(credentials);
+    expect((await User.findOne({ email: credentials.email }))!.emailVerified).toBe(false);
+    const code = await requestCode();
+    await request(app).post("/api/auth/reset-password").send({ email: credentials.email, code, newPassword });
+    expect((await User.findOne({ email: credentials.email }))!.emailVerified).toBe(true);
   });
 
   it("validates the code format and new password length", async () => {

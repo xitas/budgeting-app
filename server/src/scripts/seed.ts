@@ -52,7 +52,8 @@ async function seed(): Promise<void> {
   await connectDb();
   await wipeExistingDemoUser();
 
-  const user = new User({ email: DEMO_EMAIL, name: "Demo User" });
+  // Verified, so the demo doesn't show the "verify your email" banner.
+  const user = new User({ email: DEMO_EMAIL, name: "Demo User", emailVerified: true });
   (user as unknown as { password: string }).password = DEMO_PASSWORD;
   await user.save();
   await seedDefaultCategories(user.id);

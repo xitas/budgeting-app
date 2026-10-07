@@ -1,8 +1,19 @@
-import type { AuthResponse, User } from "shared";
+import type { AuthResponse, MessageResponse, SignupResponse, User } from "shared";
 import { apiClient } from "../../lib/apiClient";
 
-export async function signup(email: string, password: string, name: string): Promise<AuthResponse> {
-  const res = await apiClient.post<AuthResponse>("/auth/signup", { email, password, name });
+// Never signs in: the emailed code does (verifyEmail).
+export async function signup(email: string, password: string, name: string): Promise<SignupResponse> {
+  const res = await apiClient.post<SignupResponse>("/auth/signup", { email, password, name });
+  return res.data;
+}
+
+export async function verifyEmail(email: string, code: string): Promise<AuthResponse> {
+  const res = await apiClient.post<AuthResponse>("/auth/verify-email", { email, code });
+  return res.data;
+}
+
+export async function resendVerification(email: string): Promise<MessageResponse> {
+  const res = await apiClient.post<MessageResponse>("/auth/verify-email/resend", { email });
   return res.data;
 }
 

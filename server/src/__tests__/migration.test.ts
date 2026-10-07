@@ -3,6 +3,7 @@ import request from "supertest";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../app";
 import { migrateAmountsToCents, restoreBackup } from "../migrations/amountsToCents";
+import { signUpAndLogin } from "./helpers";
 import { clearTestDb, startTestDb, stopTestDb } from "./testDb";
 
 const app = createApp();
@@ -26,13 +27,12 @@ afterAll(async () => {
 });
 
 async function signUp(email: string): Promise<{ token: string; userId: mongoose.Types.ObjectId; expenseId: mongoose.Types.ObjectId; incomeId: mongoose.Types.ObjectId }> {
-  const res = await request(app).post("/api/auth/signup").send({ email, password: "password123", name: "Migration Test" });
-  const token = res.body.accessToken as string;
+  const { token, userId } = await signUpAndLogin(app, email);
   const cats = await request(app).get("/api/categories").set("Authorization", `Bearer ${token}`);
   const categories = cats.body.categories as { id: string; type: string }[];
   return {
     token,
-    userId: new mongoose.Types.ObjectId(res.body.user.id as string),
+    userId: new mongoose.Types.ObjectId(userId),
     expenseId: new mongoose.Types.ObjectId(categories.find((c) => c.type === "expense")!.id),
     incomeId: new mongoose.Types.ObjectId(categories.find((c) => c.type === "income")!.id),
   };

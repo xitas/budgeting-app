@@ -5,8 +5,10 @@ import {
   ForgotPasswordInput,
   LoginInput,
   RefreshInput,
+  ResendVerificationInput,
   ResetPasswordInput,
   SignupInput,
+  VerifyEmailInput,
 } from "../validation/auth.validation";
 
 const REFRESH_COOKIE_NAME = "refreshToken";
@@ -19,11 +21,11 @@ function isMobileClient(req: Request): boolean {
   return req.get("X-Client-Type") === "mobile";
 }
 
-function sendAuthResult(
+export function sendAuthResult(
   req: Request,
   res: Response,
   status: number,
-  { user, accessToken, refreshToken }: Awaited<ReturnType<typeof authService.login>>
+  { user, accessToken, refreshToken }: authService.AuthResult
 ): void {
   if (isMobileClient(req)) {
     res.status(status).json({ user, accessToken, refreshToken });
@@ -33,9 +35,22 @@ function sendAuthResult(
   res.status(status).json({ user, accessToken });
 }
 
+// Same 202 and message whether or not the email was already registered.
 export async function signupHandler(req: Request, res: Response): Promise<void> {
   const { email, password, name } = req.body as SignupInput;
-  sendAuthResult(req, res, 201, await authService.signup(email, password, name));
+  await authService.signup(email, password, name);
+  res.status(202).json({ message: "Check your email for a 6-digit code to finish creating your account." });
+}
+
+export async function verifyEmailHandler(req: Request, res: Response): Promise<void> {
+  const { email, code } = req.body as VerifyEmailInput;
+  sendAuthResult(req, res, 200, await authService.verifyEmail(email, code));
+}
+
+export async function resendVerificationHandler(req: Request, res: Response): Promise<void> {
+  const { email } = req.body as ResendVerificationInput;
+  await authService.resendVerification(email);
+  res.status(200).json({ message: "If that email still needs verifying, a new code is on its way." });
 }
 
 export async function loginHandler(req: Request, res: Response): Promise<void> {

@@ -7,7 +7,9 @@ interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  // Doesn't sign in: the code emailed by sign-up does (verifyEmail).
   signup: (email: string, password: string, name: string) => Promise<void>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -35,7 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signup(email: string, password: string, name: string): Promise<void> {
-    const res = await authApi.signup(email, password, name);
+    await authApi.signup(email, password, name);
+  }
+
+  async function verifyEmail(email: string, code: string): Promise<void> {
+    const res = await authApi.verifyEmail(email, code);
     setAccessToken(res.accessToken);
     setUser(res.user);
   }
@@ -47,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, verifyEmail, logout }}>{children}</AuthContext.Provider>
   );
 }
 

@@ -7,8 +7,10 @@ import {
   forgotPasswordSchema,
   loginSchema,
   refreshSchema,
+  resendVerificationSchema,
   resetPasswordSchema,
   signupSchema,
+  verifyEmailSchema,
 } from "../validation/auth.validation";
 
 const noLimit: RequestHandler = (_req, _res, next) => next();
@@ -22,6 +24,9 @@ export function createAuthRouter(rateLimits: AuthRateLimitConfig | false): Route
 
   authRouter.post("/signup", limit.signup, validate(signupSchema), controller.signupHandler);
   authRouter.post("/login", limit.login, validate(loginSchema), controller.loginHandler);
+  authRouter.post("/verify-email", validate(verifyEmailSchema), controller.verifyEmailHandler);
+  // Sends email, so it shares sign-up's per-IP budget.
+  authRouter.post("/verify-email/resend", limit.signup, validate(resendVerificationSchema), controller.resendVerificationHandler);
   authRouter.post("/refresh", validate(refreshSchema), controller.refreshHandler);
   authRouter.post("/forgot-password", validate(forgotPasswordSchema), controller.forgotPasswordHandler);
   authRouter.post("/reset-password", validate(resetPasswordSchema), controller.resetPasswordHandler);
