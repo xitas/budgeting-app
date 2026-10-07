@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { AuthResponse, User } from "shared";
 import * as authApi from "../features/auth/api";
 import { refreshSession } from "../lib/apiClient";
@@ -13,30 +13,42 @@ interface AuthContextValue {
   signup: (email: string, password: string, name: string) => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
+  // For responses that carry new tokens (e.g. after a password change).
+  applyAuth: (res: AuthResponse) => Promise<void>;
+  setUser: (user: User) => void;
+  // Forget the session without calling the API — after "sign out
+  // everywhere" or deleting the account, the server side is already gone.
+  signOutLocally: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // App launch: trade the stored refresh token (if any) for a fresh session.
     refreshSession()
-      .then((session) => setUser(session?.user ?? null))
+      .then((session) => setUserState(session?.user ?? null))
       .finally(() => setIsLoading(false));
   }, []);
 
-  async function startSession(res: AuthResponse): Promise<void> {
+  const applyAuth = useCallback(async (res: AuthResponse) => {
     setAccessToken(res.accessToken);
     await setRefreshToken(res.refreshToken ?? null);
-    setUser(res.user);
-  }
+    setUserState(res.user);
+  }, []);
+
+  const signOutLocally = useCallback(async () => {
+    await clearTokens();
+    queryClient.clear();
+    setUserState(null);
+  }, [queryClient]);
 
   async function login(email: string, password: string): Promise<void> {
-    await startSession(await authApi.login(email, password));
+    await applyAuth(await authApi.login(email, password));
   }
 
   async function signup(email: string, password: string, name: string): Promise<void> {
@@ -44,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function verifyEmail(email: string, code: string): Promise<void> {
-    await startSession(await authApi.verifyEmail(email, code));
+    await applyAuth(await authApi.verifyEmail(email, code));
   }
 
   async function logout(): Promise<void> {
@@ -53,13 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Offline or already expired — still log out locally.
     }
-    await clearTokens();
-    queryClient.clear();
-    setUser(null);
+    await signOutLocally();
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, verifyEmail, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{ user, isLoading, login, signup, verifyEmail, logout, applyAuth, setUser: setUserState, signOutLocally }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 

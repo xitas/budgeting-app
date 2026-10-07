@@ -18,8 +18,12 @@ export default function AppLayout() {
       <Stack.Screen name="budgets" options={{ title: "Budgets" }} />
       <Stack.Screen name="categories" options={{ title: "Categories" }} />
       <Stack.Screen name="recurring" options={{ title: "Recurring" }} />
+      <Stack.Screen name="settings" options={{ title: "Settings" }} />
 
       <Stack.Screen name="account/verify-email" options={{ presentation: "modal", title: "Verify your email" }} />
+      <Stack.Screen name="account/email" options={{ presentation: "modal", title: "Change email" }} />
+      <Stack.Screen name="account/password" options={{ presentation: "modal", title: "Change password" }} />
+      <Stack.Screen name="account/delete" options={{ presentation: "modal", title: "Delete account" }} />
 
       <Stack.Screen name="transaction/new" options={{ presentation: "modal", title: "Add transaction" }} />
       <Stack.Screen name="transaction/[id]" options={{ presentation: "modal", title: "Edit transaction" }} />

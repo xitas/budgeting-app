@@ -17,9 +17,9 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, signedOutNotice } = useAuth();
   const navigate = useNavigate();
-  const notice = (useLocation().state as { notice?: string } | null)?.notice;
+  const notice = (useLocation().state as { notice?: string } | null)?.notice ?? signedOutNotice;
   const [serverError, setServerError] = useState<string | null>(null);
   const {
     register,

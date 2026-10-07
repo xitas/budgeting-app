@@ -21,6 +21,9 @@ export function NavBar() {
           <NavLink to="/transactions" className={linkClass}>
             Transactions
           </NavLink>
+          <NavLink to="/settings" className={linkClass}>
+            Settings
+          </NavLink>
         </nav>
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-slate-500 sm:inline">{user?.email}</span>

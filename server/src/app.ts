@@ -8,6 +8,7 @@ import { env } from "./config/env";
 import { errorHandler } from "./middleware/errorHandler";
 import { notFound } from "./middleware/notFound";
 import { AuthRateLimitConfig, DEFAULT_AUTH_RATE_LIMITS } from "./middleware/rateLimit";
+import { accountRouter } from "./routes/account.routes";
 import { createAuthRouter } from "./routes/auth.routes";
 import { budgetRouter } from "./routes/budget.routes";
 import { categoryRouter } from "./routes/category.routes";
@@ -36,6 +37,8 @@ export function createApp(options: AppOptions = {}): Express {
   // Imports send up to MAX_IMPORT_ROWS rows in one request — more than the
   // default 100kb. Scoped to that path; everything else keeps the default.
   app.use("/api/transactions/import", express.json({ limit: "2mb" }));
+  // Full-data backups can be large.
+  app.use("/api/account/backup", express.json({ limit: "25mb" }));
   app.use(express.json());
   app.use(cookieParser());
   if (env.NODE_ENV === "development") {
@@ -45,6 +48,7 @@ export function createApp(options: AppOptions = {}): Express {
   app.use("/api/health", healthRouter);
   const authRateLimits = options.authRateLimits ?? (env.NODE_ENV === "test" ? false : DEFAULT_AUTH_RATE_LIMITS);
   app.use("/api/auth", createAuthRouter(authRateLimits));
+  app.use("/api/account", accountRouter);
   app.use("/api/categories", categoryRouter);
   app.use("/api/transactions", transactionRouter);
   app.use("/api/budgets", budgetRouter);

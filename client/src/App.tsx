@@ -4,6 +4,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ImportPage } from "./pages/ImportPage";
 import { LoginPage } from "./pages/LoginPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { SignupPage } from "./pages/SignupPage";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { WorkspacePage } from "./pages/WorkspacePage";
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/transactions" element={<WorkspacePage />} />
         <Route path="/import" element={<ImportPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

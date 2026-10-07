@@ -62,7 +62,9 @@ export * from "./currency";
 export * from "./csvImport";
 
 // API request/response shapes, shared by the web client and the mobile app.
+export * from "./api/account";
 export * from "./api/auth";
+export * from "./api/backup";
 export * from "./api/budgets";
 export * from "./api/categories";
 export * from "./api/dashboard";
