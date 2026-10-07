@@ -2,7 +2,7 @@ import { formatMoney, type Category, type TransactionType } from "shared";
 import { buttonClass, ghostButtonClass, inputClass } from "../../components/ui/formStyles";
 import { useSchemeColor } from "../../context/ThemeContext";
 import { formatDisplayDate } from "../../lib/formatDate";
-import { effectiveCategory, type ReviewRow } from "./review";
+import { effectiveCategory, type ReviewRow } from "shared";
 
 interface ReviewStepProps {
   rows: ReviewRow[];

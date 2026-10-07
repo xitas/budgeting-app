@@ -1,7 +1,8 @@
-import { centsFromDecimal, parseAmountInput, type TransactionType } from "shared";
+import { centsFromDecimal, parseAmountInput } from "../money";
+import type { TransactionType } from "../index";
 
-// Everything here is pure: file text in, typed rows out. The import page
-// wires it to the UI; the tests pin down the fiddly parts (quoting, date and
+// Everything here is pure: file text in, typed rows out. Shared by the web
+// and mobile import screens, which wire it to their UI; the tests pin down the fiddly parts (quoting, date and
 // number formats, column guessing).
 
 // ---------------------------------------------------------------- CSV

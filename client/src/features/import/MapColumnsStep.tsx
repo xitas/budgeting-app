@@ -8,7 +8,7 @@ import {
   type DateFormat,
   type DecimalSeparator,
   type ParseOptions,
-} from "./parse";
+} from "shared";
 
 interface MapColumnsStepProps {
   fileName: string;

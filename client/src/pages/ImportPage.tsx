@@ -7,20 +7,17 @@ import { useCategories } from "../features/categories/hooks";
 import { MapColumnsStep } from "../features/import/MapColumnsStep";
 import {
   buildRows,
-  detectDateFormat,
-  detectDecimalSeparator,
-  guessMapping,
-  parseCsv,
+  loadCsvForImport,
+  rowsForDuplicateCheck,
+  rowsToImport,
+  toReviewRows,
   type ColumnMapping,
   type ParseOptions,
-} from "../features/import/parse";
-import { effectiveCategory, type ReviewRow } from "../features/import/review";
+  type ReviewRow,
+} from "shared";
 import { ReviewStep } from "../features/import/ReviewStep";
 import { checkImportDuplicates, importTransactions } from "../features/transactions/api";
 import { extractErrorMessage } from "../lib/errors";
-
-// Server-side cap per request (MAX_IMPORT_ROWS); larger files must be split.
-const MAX_ROWS = 5000;
 
 type Step = "file" | "map" | "review" | "done";
 
@@ -51,28 +48,15 @@ export function ImportPage() {
     if (!selected) return;
     setError(null);
 
-    const table = parseCsv(await selected.text());
-    if (table.length < 2) {
-      setError("That file has no rows under its header line. Is it a CSV export?");
+    const loaded = loadCsvForImport(await selected.text(), navigator.language);
+    if ("error" in loaded) {
+      setError(loaded.error);
       return;
     }
-    const [headers, ...dataRows] = table;
-    if (dataRows.length > MAX_ROWS) {
-      setError(`That file has ${dataRows.length} rows — split it into files of at most ${MAX_ROWS}.`);
-      return;
-    }
-
-    const guessed = guessMapping(headers);
-    const column = (idx: number) => (idx >= 0 ? dataRows.map((r) => r[idx] ?? "").slice(0, 200) : []);
-    const detected = detectDateFormat(column(guessed.date), navigator.language);
-    setFile({ name: selected.name, headers, dataRows });
-    setMapping(guessed);
-    setOptions({
-      dateFormat: detected.format,
-      decimal: detectDecimalSeparator([...column(guessed.amount), ...column(guessed.debit), ...column(guessed.credit)]),
-      invertSigns: false,
-    });
-    setDateAmbiguous(detected.ambiguous);
+    setFile({ name: selected.name, headers: loaded.headers, dataRows: loaded.dataRows });
+    setMapping(loaded.mapping);
+    setOptions(loaded.options);
+    setDateAmbiguous(loaded.dateAmbiguous);
     setStep("map");
   }
 
@@ -82,25 +66,9 @@ export function ImportPage() {
     setError(null);
     try {
       const parsed = buildRows(file.dataRows, mapping, options);
-      const valid = parsed.filter((r) => !r.error);
-      const duplicateIdx = valid.length
-        ? await checkImportDuplicates(
-            valid.map((r) => ({ date: r.date!, type: r.type!, amountCents: r.amountCents!, description: r.description }))
-          )
-        : [];
-      const duplicateLines = new Set(duplicateIdx.map((i) => valid[i].line));
-
-      setRows(
-        parsed.map((r) => {
-          const duplicate = duplicateLines.has(r.line);
-          // Match a category column value to one of the user's categories
-          // of the same type, by name (case-insensitive).
-          const match = r.categoryName
-            ? categories.find((c) => c.type === r.type && c.name.toLowerCase() === r.categoryName.toLowerCase())
-            : undefined;
-          return { ...r, duplicate, include: !r.error && !duplicate, categoryId: match?.id ?? "" };
-        })
-      );
+      const toCheck = rowsForDuplicateCheck(parsed);
+      const duplicateIdx = toCheck.length ? await checkImportDuplicates(toCheck) : [];
+      setRows(toReviewRows(parsed, duplicateIdx, categories));
       setStep("review");
     } catch (err) {
       setError(extractErrorMessage(err));
@@ -113,17 +81,7 @@ export function ImportPage() {
     setBusy(true);
     setError(null);
     try {
-      const count = await importTransactions(
-        rows
-          .filter((r) => r.include)
-          .map((r) => ({
-            date: r.date!,
-            type: r.type!,
-            amountCents: r.amountCents!,
-            description: r.description,
-            category: effectiveCategory(r, fallback),
-          }))
-      );
+      const count = await importTransactions(rowsToImport(rows, fallback));
       // New transactions change the list, the dashboard and budget spend.
       void queryClient.invalidateQueries({ queryKey: ["transactions"] });
       void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
