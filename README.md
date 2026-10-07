@@ -191,7 +191,11 @@ cd server && npm run seed
 ```
 
 Log in with **demo@example.com** / **password123**. Safe to re-run — it wipes
-and recreates just that one demo account.
+and recreates just that one demo account (already verified, so no "verify your
+email" banner).
+
+New sign-ups get a 6-digit code by email. Locally it lands in Mailpit at
+http://localhost:8025.
 
 ### Upgrading an existing database (amounts in cents)
 
@@ -255,10 +259,15 @@ With `NODE_ENV=production` the API refuses to start on development values
 
 - [x] Dark mode (web + mobile: follows the system by default, with a System / Light / Dark switch)
 - [x] CSV export of transactions (respects the current filters; web download, mobile share sheet)
-- [x] CSV import (web): bank statements or this app's own export, with column mapping, date/number format detection, duplicate detection and a review step
+- [x] CSV import (web + mobile): bank statements or this app's own export, with column mapping, date/number format detection, duplicate detection and a review step (parsing shared by both apps; mobile uses the system file picker)
 - [x] CI (GitHub Actions): lint, typecheck, builds, Android bundle, and the full test suite against a MongoDB replica set on every push/PR
+- [x] Money stored as whole cents, login rate limiting, production config checks
+- [x] Profile & settings (web + mobile): name, display currency (PKR, USD, EUR, GBP, AED, SAR, INR), appearance, change password, change email (code to the new address), sign out of all devices, delete account
+- [x] Email verification: 6-digit code at sign-up, a banner until verified; sign-up answers the same for new and registered emails
+- [x] Full-data backup (web + mobile): one JSON file with everything; restore into an empty account or replace existing data, with a preview and a format version
+- [x] Mobile date-range filter on transactions (this month, last month, last 3 months, custom)
 
-**Future work**: CSV import on mobile, full-data backup export, live deployment (needed before the mobile app is usable off the local network).
+**Future work**: live deployment (needed before the mobile app is usable off the local network), per-row category editing in the mobile import review.
 
 ## License
 

@@ -53,6 +53,79 @@ Mail goes through `utils/mailer.ts` (nodemailer over SMTP). Locally, SMTP
 points at Mailpit from `docker-compose.yml` (inbox at http://localhost:8025);
 with `SMTP_HOST` unset, messages are logged to the console instead.
 
+## Sign-up and email verification
+
+Sign-up never starts a session and always answers `202` with the same
+message, so it can't be used to find out whether an email has an account:
+
+- **New address** — the account is created unverified and a 6-digit code is
+  emailed. `POST /auth/verify-email {email, code}` verifies it and signs in
+  (the code proves the mailbox, as a password reset does).
+- **Already registered** — nothing is created; the owner gets a "someone tried
+  to sign up with your email" note instead (at most hourly). The same bcrypt
+  work runs, so timing matches too.
+
+Unverified users can log in with their password; both apps show a banner
+with "Enter code" and "Resend code" (`POST /auth/verify-email/resend`, same
+answer for every email, 60 s cooldown). A password reset also marks the email
+verified. Accounts created before verification existed have no
+`emailVerified` field and count as verified.
+
+Remaining gap, by design: someone could sign up with an address and then try
+logging in with the password they chose — success means the address was
+free. Closing that needs "no login until verified", which the spec ruled out.
+
+All emailed codes (reset, verification, email change) share one implementation
+(`server/src/services/oneTimeCode.ts`): only a SHA-256 hash is stored, 15 min
+expiry, 60 s resend cooldown, burned after 5 wrong tries.
+
+## Account (`/api/account`, signed in)
+
+- `PATCH /profile` — name and display currency.
+- `POST /password` — needs the current password; signs out other devices and
+  returns fresh tokens for this one.
+- `POST /email` → `POST /email/confirm` — the code goes to the *new* address.
+  If that address already has an account, its owner gets a note and no code
+  is sent; the response is the same either way. `DELETE /email/pending`
+  cancels.
+- `POST /sign-out-everywhere` — bumps `refreshTokenVersion`, so every refresh
+  token stops working (access tokens lapse within their 15-min lifetime).
+- `DELETE /` `{password}` — deletes the user and all their data in one
+  transaction.
+
+Password checks here use the same per-account throttle as login.
+
+## Display currency
+
+Each user picks PKR (default), USD, EUR, GBP, AED, SAR or INR
+(`shared/src/currency.ts`). It only changes how amounts are shown — both apps
+format through `useMoney()`, which wraps the shared `formatMoney` with the
+user's currency ("Rs 1,250.50", "$1,250.50"). Every listed currency has 2
+decimals, so switching never changes stored values; adding one with different
+decimals (JPY) would need a conversion step. CSV and backups keep plain
+numbers without symbols.
+
+## Full-data backup
+
+`GET /api/account/backup` returns one JSON file (`shared/src/api/backup.ts`):
+`format: "budget-app-backup"`, `version`, settings, categories, transactions,
+budgets, recurring rules and loans with their repayments. Records keep their
+ids only to link to each other.
+
+Restoring is two calls: `POST /backup/preview` validates the file and returns
+counts, date range and whether the account already has data of its own; then
+`POST /backup/import {backup, replaceExisting}` replaces the account's data in
+one MongoDB transaction (a bad file changes nothing). If the account has data,
+`replaceExisting: true` is required — both apps ask for explicit confirmation
+first. Records get new ids; links (loan ↔ transactions, recurring rule ↔
+generated transactions) are carried over. The currency comes from the backup;
+name and sign-in details stay the account's own.
+
+**Versioning**: a file with a higher `version` than the app knows is refused
+with "made by a newer version". When the format changes, bump `BACKUP_VERSION`
+and add a step to `MIGRATIONS` in `server/src/services/backup.service.ts` that
+upgrades the previous version, so older files keep importing.
+
 ## Login protection
 
 - **Per IP** (`middleware/rateLimit.ts`): login 20 attempts / 15 min,
@@ -184,8 +257,9 @@ would break SDK 57. Don't run `npm audit fix --force` in this repo; plain
 
 ## CSV import
 
-The file never goes to the server. The web client parses it
-(`features/import/parse.ts` — pure functions, unit-tested) in three steps:
+The file never goes to the server. The client parses it with
+`shared/src/csvImport/` (pure functions, unit-tested) — the same code on the web
+and on mobile, where the file comes from the system file picker — in three steps:
 
 1. **Read** — RFC 4180 parsing with delimiter detection (`,` `;` tab), BOM
    stripped.
