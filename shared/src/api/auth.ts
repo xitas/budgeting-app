@@ -1,7 +1,11 @@
+import type { CurrencyCode } from "../currency";
+
 export interface User {
   id: string;
   email: string;
   name: string;
+  // Display currency for every amount (see shared/src/currency.ts).
+  currency: CurrencyCode;
   createdAt: string;
   updatedAt: string;
 }

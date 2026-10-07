@@ -1,8 +1,9 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CATEGORICAL_PALETTE, centsToUnits, formatMoney, type MonthlyTrendPoint } from "shared";
+import { CATEGORICAL_PALETTE, centsToUnits, type MonthlyTrendPoint } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
 import { useChartTheme } from "./chartTheme";
+import { useMoney } from "../../lib/useMoney";
 
 // Fixed categorical order — slot 1 (blue) and slot 2 (orange), consistent
 // with the rest of the app's palette usage. Never reassign per chart.
@@ -15,6 +16,7 @@ function monthLabel(monthKey: string): string {
 }
 
 export function IncomeVsExpenseChart({ data }: { data: MonthlyTrendPoint[] }) {
+  const money = useMoney();
   const theme = useChartTheme();
   const chartData = data.map((d) => ({
     ...d,
@@ -36,8 +38,8 @@ export function IncomeVsExpenseChart({ data }: { data: MonthlyTrendPoint[] }) {
         {chartData.map((row) => (
           <tr key={row.month} className="border-t border-slate-100">
             <td className="py-1.5">{row.label}</td>
-            <td className="py-1.5 text-right">{formatMoney(row.incomeCents)}</td>
-            <td className="py-1.5 text-right">{formatMoney(row.expenseCents)}</td>
+            <td className="py-1.5 text-right">{money.format(row.incomeCents)}</td>
+            <td className="py-1.5 text-right">{money.format(row.expenseCents)}</td>
           </tr>
         ))}
       </tbody>

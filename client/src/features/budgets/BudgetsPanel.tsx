@@ -12,8 +12,9 @@ import { zodFormResolver } from "../../lib/zodFormResolver";
 import { amountField, parseAmountDraft } from "../../lib/money";
 import { useCategories } from "../categories/hooks";
 import { useBudgets, useCreateBudget, useDeleteBudget, useUpdateBudget } from "./hooks";
-import { centsToDecimalString, formatMoney, parseAmountInput, type Budget } from "shared";
+import { centsToDecimalString, parseAmountInput, type Budget } from "shared";
 import { useSchemeColor } from "../../context/ThemeContext";
+import { useMoney } from "../../lib/useMoney";
 
 const MONTH_NAMES = [
   "January",
@@ -91,6 +92,7 @@ function AddBudgetForm({
 }
 
 export function BudgetsPanel() {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -215,7 +217,7 @@ export function BudgetsPanel() {
                     </span>
                     {isEditing ? (
                       <span className="flex items-center gap-1">
-                        {formatMoney(b.spentCents)} /
+                        {money.format(b.spentCents)} /
                         <input
                           type="text"
                           inputMode="decimal"
@@ -228,14 +230,14 @@ export function BudgetsPanel() {
                       </span>
                     ) : (
                       <span className={overBudget ? "text-red-600" : "text-slate-600"}>
-                        {formatMoney(b.spentCents)} / {formatMoney(b.limitCents)}
+                        {money.format(b.spentCents)} / {money.format(b.limitCents)}
                       </span>
                     )}
                   </div>
                   <ProgressBar value={b.spentCents} max={isEditing ? (parseAmountInput(draftLimit) ?? b.limitCents) : b.limitCents} color={schemeColor(b.category.color)} />
                   <div className="mt-1 flex items-center justify-between text-xs">
                     <span className={overBudget ? "text-red-600" : "text-slate-400"}>
-                      {overBudget ? `Over by ${formatMoney(b.spentCents - b.limitCents)}` : `${formatMoney(b.remainingCents)} remaining`}
+                      {overBudget ? `Over by ${money.format(b.spentCents - b.limitCents)}` : `${money.format(b.remainingCents)} remaining`}
                     </span>
                     {isEditing ? (
                       <InlineEditActions onSave={() => void saveEdit()} onCancel={cancelEdit} isSaving={updateBudget.isPending} />

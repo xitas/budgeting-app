@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { StyleSheet, Text, View } from "react-native";
-import { centsToDecimalString, formatMoney, type Budget } from "shared";
+import { centsToDecimalString, type Budget } from "shared";
 import { z } from "zod";
 import { Button } from "../../../components/ui/Button";
 import { FormField } from "../../../components/ui/FormField";
@@ -15,6 +15,7 @@ import { MONTH_NAMES } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
 import { amountField, zodFormResolver } from "../../../lib/money";
 import { useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
+import { useMoney } from "../../../lib/useMoney";
 
 const editBudgetSchema = z.object({
   limitCents: amountField("Limit"),
@@ -34,6 +35,7 @@ export default function EditBudgetScreen() {
 }
 
 function EditBudgetForm({ budget }: { budget: Budget }) {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const updateBudget = useUpdateBudget();
@@ -73,7 +75,7 @@ function EditBudgetForm({ budget }: { budget: Budget }) {
         <Text style={styles.name}>{budget.category.name}</Text>
       </View>
       <Text style={styles.context}>
-        {MONTH_NAMES[budget.month - 1]} {budget.year} · spent {formatMoney(budget.spentCents)} so far
+        {MONTH_NAMES[budget.month - 1]} {budget.year} · spent {money.format(budget.spentCents)} so far
       </Text>
       <FormField control={control} name="limitCents" label="Monthly limit" keyboardType="decimal-pad" error={errors.limitCents?.message} />
       {formError ? <Notice tone="error">{formError}</Notice> : null}

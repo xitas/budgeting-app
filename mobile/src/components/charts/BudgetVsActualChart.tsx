@@ -3,13 +3,14 @@ import type { BudgetVsActual } from "shared";
 import { Meter } from "../ui/Meter";
 import { type Colors } from "../ui/theme";
 import { ChartCard, DataTable } from "./ChartCard";
-import { formatAmount } from "./chartUtils";
 import { useColors, useSchemeColor, useThemedStyles } from "../../context/ThemeContext";
+import { useMoney } from "../../lib/useMoney";
 
 // One meter per budget. Over-budget switches the fill to the reserved danger
 // color AND says so in words ("Over by …"), so the state never rests on
 // color alone.
 export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const colors = useColors();
@@ -21,8 +22,8 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
           headers={["Category", "Spent", "Limit", "Used"]}
           rows={data.map((b) => [
             b.category.name,
-            formatAmount(b.spentCents),
-            formatAmount(b.limitCents),
+            money.format(b.spentCents),
+            money.format(b.limitCents),
             `${b.limitCents ? Math.round((b.spentCents / b.limitCents) * 100) : 0}%`,
           ])}
         />
@@ -42,11 +43,11 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
                     {b.category.name}
                   </Text>
                   <Text style={styles.amounts}>
-                    {formatAmount(b.spentCents)} / {formatAmount(b.limitCents)}
+                    {money.format(b.spentCents)} / {money.format(b.limitCents)}
                   </Text>
                 </View>
                 <Meter value={b.spentCents} max={b.limitCents} color={schemeColor(b.category.color)} overColor={colors.danger} />
-                {over ? <Text style={styles.over}>Over by {formatAmount(Math.abs(b.remainingCents))}</Text> : null}
+                {over ? <Text style={styles.over}>Over by {money.format(Math.abs(b.remainingCents))}</Text> : null}
               </View>
             );
           })}

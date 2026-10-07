@@ -9,6 +9,7 @@ import {
   parseAmountInput,
   sumCents,
 } from "./money";
+import { CURRENCIES, DEFAULT_CURRENCY, getCurrency, isCurrencyCode } from "./currency";
 
 describe("parseAmountInput", () => {
   it.each([
@@ -121,5 +122,46 @@ describe("decimal text round trip", () => {
       expect(parseAmountInput(centsToDecimalString(cents))).toBe(cents);
       expect(centsFromDecimal(Number(centsToDecimalString(cents)))).toBe(cents);
     }
+  });
+});
+
+describe("currency display", () => {
+  it("prefixes the user's currency symbol, spaced for letter symbols", () => {
+    expect(formatMoney(125050, { currency: "PKR", grouping: true })).toBe("Rs 1,250.50");
+    expect(formatMoney(125050, { currency: "USD", grouping: true })).toBe("$1,250.50");
+    expect(formatMoney(999, { currency: "EUR" })).toBe("€9.99");
+    expect(formatMoney(500, { currency: "GBP" })).toBe("£5.00");
+    expect(formatMoney(100000, { currency: "AED", grouping: true })).toBe("AED 1,000.00");
+    expect(formatMoney(100000, { currency: "SAR", grouping: true })).toBe("SAR 1,000.00");
+    expect(formatMoney(100000, { currency: "INR", grouping: true })).toBe("₹1,000.00");
+  });
+
+  it("puts the sign before the symbol", () => {
+    expect(formatMoney(-2629, { currency: "USD" })).toBe("-$26.29");
+    expect(formatMoney(2629, { currency: "PKR", sign: "always" })).toBe("+Rs 26.29");
+    expect(formatSignedAmount(320000, "income", { currency: "GBP", grouping: true })).toBe("+£3,200.00");
+    expect(formatSignedAmount(2629, "expense", { currency: "PKR" })).toBe("-Rs 26.29");
+  });
+
+  it("falls back to the default currency for an unknown code", () => {
+    expect(DEFAULT_CURRENCY).toBe("PKR");
+    expect(getCurrency("XYZ").code).toBe("PKR");
+    expect(formatMoney(100, { currency: "XYZ" })).toBe("Rs 1.00");
+  });
+
+  it("lists the supported currencies, all with 2 decimals", () => {
+    expect(CURRENCIES.map((c) => c.code)).toEqual(["PKR", "USD", "EUR", "GBP", "AED", "SAR", "INR"]);
+    expect(CURRENCIES.every((c) => c.decimals === 2)).toBe(true);
+    expect(isCurrencyCode("USD")).toBe(true);
+    expect(isCurrencyCode("usd")).toBe(false);
+  });
+
+  it("supports other minor-unit sizes in the low-level helpers", () => {
+    // e.g. a 0-decimal currency like JPY, or a 3-decimal one like KWD
+    expect(centsToDecimalString(1250, 0)).toBe("1250");
+    expect(parseAmountInput("1250", 0)).toBe(1250);
+    expect(parseAmountInput("12.5", 0)).toBeNull();
+    expect(parseAmountInput("1.234", 3)).toBe(1234);
+    expect(centsFromDecimal(1.2345, 3)).toBe(1235);
   });
 });

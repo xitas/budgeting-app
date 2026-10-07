@@ -15,8 +15,9 @@ import { zodFormResolver } from "../../lib/zodFormResolver";
 import { exportTransactionsCsv } from "./api";
 import { useCategories } from "../categories/hooks";
 import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from "./hooks";
-import { centsToDecimalString, formatSignedAmount, type Transaction, type TransactionFilters } from "shared";
+import { centsToDecimalString, type Transaction, type TransactionFilters } from "shared";
 import { useSchemeColor } from "../../context/ThemeContext";
+import { useMoney } from "../../lib/useMoney";
 
 const transactionFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
@@ -155,6 +156,7 @@ function amountClass(tx: Transaction): string {
 }
 
 export function TransactionsPanel() {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const [filters, setFilters] = useState<TransactionFilters>({ page: 1, limit: PAGE_SIZE });
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -389,7 +391,7 @@ export function TransactionsPanel() {
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="truncate text-sm font-medium text-slate-900">{tx.description || tx.category.name}</span>
                     <span className={`shrink-0 text-sm font-semibold tabular-nums ${amountClass(tx)}`}>
-                      {formatSignedAmount(tx.amountCents, tx.type)}
+                      {money.signed(tx.amountCents, tx.type)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-3">
@@ -454,7 +456,7 @@ export function TransactionsPanel() {
                           </span>
                         </td>
                         <td className="px-4 py-2 text-slate-600">{tx.description || "—"}</td>
-                        <td className={`px-4 py-2 text-right ${amountClass(tx)}`}>{formatSignedAmount(tx.amountCents, tx.type)}</td>
+                        <td className={`px-4 py-2 text-right ${amountClass(tx)}`}>{money.signed(tx.amountCents, tx.type)}</td>
                         <td className="px-4 py-2 text-right">
                           <RowActions tx={tx} onEdit={() => startEdit(tx)} onDelete={() => void handleDelete(tx.id)} error={deleteErrors[tx.id]} />
                         </td>

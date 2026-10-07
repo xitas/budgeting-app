@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { centsToDecimalString, formatMoney, type RecurringFrequency, type RecurringTransaction, type UpdateRecurringInput } from "shared";
+import { centsToDecimalString, type RecurringFrequency, type RecurringTransaction, type UpdateRecurringInput } from "shared";
 import { z } from "zod";
 import { Field } from "../../components/ui/Field";
 import { buttonClass, inputClass } from "../../components/ui/formStyles";
@@ -14,6 +14,7 @@ import { amountField, parseAmountDraft } from "../../lib/money";
 import { useCategories } from "../categories/hooks";
 import { useCreateRecurring, useDeleteRecurring, useRecurring, useRunRecurringNow, useUpdateRecurring } from "./hooks";
 import { useSchemeColor } from "../../context/ThemeContext";
+import { useMoney } from "../../lib/useMoney";
 
 const createRecurringSchema = z.object({
   category: z.string().min(1, "Category is required"),
@@ -112,6 +113,7 @@ function AddRecurringForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export function RecurringPanel() {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const { data: recurring, isLoading, isError } = useRecurring();
   const updateRecurring = useUpdateRecurring();
@@ -224,7 +226,7 @@ export function RecurringPanel() {
                           onChange={(e) => setDraftAmount(e.target.value)}
                         />
                       ) : (
-                        formatMoney(r.amountCents)
+                        money.format(r.amountCents)
                       )}
                     </span>
                   </div>

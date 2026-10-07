@@ -2,7 +2,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { formatMoney } from "shared";
 import { Button } from "../../../components/ui/Button";
 import { Card, CenteredMessage, SectionTitle } from "../../../components/ui/layout";
 import { Meter } from "../../../components/ui/Meter";
@@ -14,8 +13,10 @@ import { confirmDestructive } from "../../../lib/confirm";
 import { formatDisplayDate } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
 import { useColors, useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
+import { useMoney } from "../../../lib/useMoney";
 
 export default function LoanDetailScreen() {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const colors = useColors();
@@ -50,7 +51,7 @@ export default function LoanDetailScreen() {
 
   async function handleRemoveRepayment(repaymentId: string, amountCents: number): Promise<void> {
     if (!loan) return;
-    const ok = await confirmDestructive("Remove repayment?", `Removes the ${formatMoney(amountCents)} repayment and its transaction.`, "Remove");
+    const ok = await confirmDestructive("Remove repayment?", `Removes the ${money.format(amountCents)} repayment and its transaction.`, "Remove");
     if (!ok) return;
     setError(null);
     try {
@@ -80,11 +81,11 @@ export default function LoanDetailScreen() {
 
       <Card style={styles.summary}>
         <Text style={styles.direction}>{loan.direction === "lent" ? "You lent" : "You borrowed"}</Text>
-        <Text style={styles.principal}>{formatMoney(loan.principalCents)}</Text>
+        <Text style={styles.principal}>{money.format(loan.principalCents)}</Text>
         <Meter value={loan.repaidCents} max={loan.principalCents} color={schemeColor(loanColor(loan))} />
         <View style={styles.summaryRow}>
-          <Text style={styles.meta}>{describeLoanState(loan)}</Text>
-          <Text style={styles.meta}>Repaid {formatMoney(loan.repaidCents)}</Text>
+          <Text style={styles.meta}>{describeLoanState(loan, money)}</Text>
+          <Text style={styles.meta}>Repaid {money.format(loan.repaidCents)}</Text>
         </View>
         <Text style={styles.meta}>
           {formatDisplayDate(loan.date)}
@@ -104,7 +105,7 @@ export default function LoanDetailScreen() {
           {loan.repayments.map((r, i) => (
             <View key={r.id} style={[styles.repayment, i > 0 && styles.repaymentBorder]}>
               <View style={styles.repaymentMain}>
-                <Text style={styles.repaymentAmount}>{formatMoney(r.amountCents)}</Text>
+                <Text style={styles.repaymentAmount}>{money.format(r.amountCents)}</Text>
                 <Text style={styles.meta}>
                   {formatDisplayDate(r.date)}
                   {r.note ? ` · ${r.note}` : ""}
@@ -112,7 +113,7 @@ export default function LoanDetailScreen() {
               </View>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Remove repayment of ${formatMoney(r.amountCents)}`}
+                accessibilityLabel={`Remove repayment of ${money.format(r.amountCents)}`}
                 hitSlop={12}
                 onPress={() => void handleRemoveRepayment(r.id, r.amountCents)}
               >

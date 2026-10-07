@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { HydratedDocument, Model, Schema, model } from "mongoose";
+import { CURRENCY_CODES, DEFAULT_CURRENCY, type CurrencyCode } from "shared";
 
 export const SALT_ROUNDS = 12;
 
@@ -11,6 +12,7 @@ export interface IUser {
   resetCodeHash?: string;
   resetCodeExpiresAt?: Date;
   resetCodeAttempts: number;
+  currency: CurrencyCode;
 }
 
 export interface IUserMethods {
@@ -62,6 +64,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: 0,
       select: false,
     },
+    currency: { type: String, enum: CURRENCY_CODES, default: DEFAULT_CURRENCY },
   },
   { timestamps: true }
 );

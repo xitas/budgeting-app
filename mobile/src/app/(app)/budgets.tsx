@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
-import { formatMoney, type Budget } from "shared";
+import { type Budget } from "shared";
 import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../components/ui/layout";
 import { Meter } from "../../components/ui/Meter";
 import { MonthSwitcher } from "../../components/ui/MonthSwitcher";
@@ -9,6 +9,7 @@ import { radius, type Colors } from "../../components/ui/theme";
 import { useBudgets } from "../../features/budgets/hooks";
 import { extractErrorMessage } from "../../lib/errors";
 import { useColors, useSchemeColor, useThemedStyles } from "../../context/ThemeContext";
+import { useMoney } from "../../lib/useMoney";
 
 export default function BudgetsScreen() {
   const styles = useThemedStyles(makeStyles);
@@ -54,6 +55,7 @@ export default function BudgetsScreen() {
 }
 
 function BudgetCard({ budget, onPress }: { budget: Budget; onPress: () => void }) {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const colors = useColors();
@@ -66,12 +68,12 @@ function BudgetCard({ budget, onPress }: { budget: Budget; onPress: () => void }
           {budget.category.name}
         </Text>
         <Text style={styles.amounts}>
-          {formatMoney(budget.spentCents)} / {formatMoney(budget.limitCents)}
+          {money.format(budget.spentCents)} / {money.format(budget.limitCents)}
         </Text>
       </View>
       <Meter value={budget.spentCents} max={budget.limitCents} color={schemeColor(budget.category.color)} overColor={colors.danger} />
       <Text style={[styles.status, over && styles.statusOver]}>
-        {over ? `Over by ${formatMoney(budget.remainingCents, { sign: "never" })}` : `${formatMoney(budget.remainingCents)} left`}
+        {over ? `Over by ${money.format(budget.remainingCents, { sign: "never" })}` : `${money.format(budget.remainingCents)} left`}
       </Text>
     </Pressable>
   );

@@ -2,8 +2,8 @@ import { StyleSheet, Text, View } from "react-native";
 import type { CategorySpending } from "shared";
 import { type Colors } from "../ui/theme";
 import { ChartCard, DataTable } from "./ChartCard";
-import { formatAmount } from "./chartUtils";
 import { useSchemeColor, useThemedStyles } from "../../context/ThemeContext";
+import { useMoney } from "../../lib/useMoney";
 
 const BAR_THICKNESS = 14;
 
@@ -15,6 +15,7 @@ function percentOf(value: number, max: number): number {
 // top 7 into "Other"). One series — spend — so no legend: the category name
 // beside each bar carries identity, and each bar's value sits at its tip.
 export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const total = data.reduce((sum, row) => sum + row.amountCents, 0);
@@ -26,7 +27,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
       tableView={
         <DataTable
           headers={["Category", "Spent", "Share"]}
-          rows={data.map((row) => [row.name, formatAmount(row.amountCents), `${total ? Math.round((row.amountCents / total) * 100) : 0}%`])}
+          rows={data.map((row) => [row.name, money.format(row.amountCents), `${total ? Math.round((row.amountCents / total) * 100) : 0}%`])}
         />
       }
     >
@@ -39,7 +40,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
               key={row.categoryId}
               style={styles.row}
               accessible
-              accessibilityLabel={`${row.name}: ${formatAmount(row.amountCents)}`}
+              accessibilityLabel={`${row.name}: ${money.format(row.amountCents)}`}
             >
               <View style={styles.labelRow}>
                 <View style={[styles.dot, { backgroundColor: schemeColor(row.color) }]} />
@@ -49,7 +50,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
               </View>
               <View style={styles.track}>
                 <View style={[styles.bar, { width: `${percentOf(row.amountCents, max)}%`, backgroundColor: schemeColor(row.color) }]} />
-                <Text style={[styles.value, { left: `${percentOf(row.amountCents, max)}%` }]}>{formatAmount(row.amountCents)}</Text>
+                <Text style={[styles.value, { left: `${percentOf(row.amountCents, max)}%` }]}>{money.format(row.amountCents, { symbol: false })}</Text>
               </View>
             </View>
           ))}

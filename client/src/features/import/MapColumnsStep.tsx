@@ -1,5 +1,4 @@
 import { buttonClass, ghostButtonClass, inputClass } from "../../components/ui/formStyles";
-import { formatMoney } from "shared";
 import { formatDisplayDate } from "../../lib/formatDate";
 import {
   DATE_FORMATS,
@@ -9,6 +8,7 @@ import {
   type DecimalSeparator,
   type ParseOptions,
 } from "shared";
+import { useMoney } from "../../lib/useMoney";
 
 interface MapColumnsStepProps {
   fileName: string;
@@ -41,6 +41,7 @@ export function MapColumnsStep({
   isChecking,
   error,
 }: MapColumnsStepProps) {
+  const money = useMoney();
   const set = (patch: Partial<ColumnMapping>) => onMappingChange({ ...mapping, ...patch });
   const preview = buildRows(dataRows.slice(0, PREVIEW_ROWS), mapping, options);
   const amountMapped = mapping.amountMode === "signed" ? mapping.amount >= 0 : mapping.debit >= 0 || mapping.credit >= 0;
@@ -176,7 +177,7 @@ export function MapColumnsStep({
                       <td className="px-3 py-2">{row.description || "—"}</td>
                       <td className={`px-3 py-2 text-right ${row.type === "income" ? "text-green-700" : "text-slate-900"}`}>
                         {row.type === "income" ? "+" : "-"}
-                        {formatMoney(row.amountCents!)}
+                        {money.format(row.amountCents!)}
                       </td>
                     </>
                   )}

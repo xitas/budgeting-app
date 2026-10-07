@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { StyleSheet, Text } from "react-native";
-import { centsToDecimalString, formatMoney } from "shared";
+import { centsToDecimalString } from "shared";
 import { z } from "zod";
 import { Button } from "../../../components/ui/Button";
 import { DateField } from "../../../components/ui/DateField";
@@ -15,6 +15,7 @@ import { todayIso } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
 import { amountField, zodFormResolver } from "../../../lib/money";
 import { useThemedStyles } from "../../../context/ThemeContext";
+import { useMoney } from "../../../lib/useMoney";
 
 const addRepaymentSchema = z.object({
   amountCents: amountField("Amount"),
@@ -25,6 +26,7 @@ type AddRepaymentFormInput = z.input<typeof addRepaymentSchema>; // amount as ty
 type AddRepaymentFormValues = z.output<typeof addRepaymentSchema>; // amount in cents
 
 export default function AddRepaymentScreen() {
+  const money = useMoney();
   const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: loans } = useLoans();
@@ -56,7 +58,7 @@ export default function AddRepaymentScreen() {
       {loan ? (
         <Text style={styles.context}>
           {loan.direction === "lent" ? `${loan.counterparty} paying you back` : `You paying back ${loan.counterparty}`} ·{" "}
-          {formatMoney(loan.outstandingCents)} outstanding
+          {money.format(loan.outstandingCents)} outstanding
         </Text>
       ) : null}
       <FormField control={control} name="amountCents" label="Amount" keyboardType="decimal-pad" placeholder="0.00" error={errors.amountCents?.message} />

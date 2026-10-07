@@ -1,8 +1,9 @@
 import { Bar, BarChart, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { centsToUnits, formatMoney, type BudgetVsActual } from "shared";
+import { centsToUnits, type BudgetVsActual } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
 import { useChartTheme } from "./chartTheme";
+import { useMoney } from "../../lib/useMoney";
 
 
 interface Row {
@@ -14,6 +15,7 @@ interface Row {
 }
 
 export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
+  const money = useMoney();
   const theme = useChartTheme();
   if (data.length === 0) {
     return (
@@ -49,8 +51,8 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
                 {row.name}
               </span>
             </td>
-            <td className="py-1.5 text-right">{formatMoney(row.spentCents)}</td>
-            <td className="py-1.5 text-right">{formatMoney(row.limitCents)}</td>
+            <td className="py-1.5 text-right">{money.format(row.spentCents)}</td>
+            <td className="py-1.5 text-right">{money.format(row.limitCents)}</td>
           </tr>
         ))}
       </tbody>
@@ -85,7 +87,7 @@ export function BudgetVsActualChart({ data }: { data: BudgetVsActual[] }) {
                 <ChartTooltip
                   active={active}
                   label={label}
-                  payload={[{ value: centsToUnits(row.spentCents), name: `Spent of ${formatMoney(row.limitCents)} limit`, color: row.color }]}
+                  payload={[{ value: centsToUnits(row.spentCents), name: `Spent of ${money.format(row.limitCents)} limit`, color: row.color }]}
                 />
               );
             }}

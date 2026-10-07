@@ -2,7 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useNavigation } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { formatSignedAmount, type Transaction, type TransactionType } from "shared";
+import { type Transaction, type TransactionType } from "shared";
 import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../../components/ui/layout";
 import { SegmentedControl } from "../../../components/ui/SegmentedControl";
 import { type Colors } from "../../../components/ui/theme";
@@ -13,6 +13,7 @@ import { formatDisplayDate, todayIso } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
 import { shareCsv } from "../../../lib/shareFile";
 import { useColors, useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
+import { useMoney } from "../../../lib/useMoney";
 
 type TypeFilter = "all" | TransactionType;
 
@@ -135,6 +136,7 @@ export default function TransactionsScreen() {
 }
 
 function TransactionRow({ tx, onPress }: { tx: Transaction; onPress: () => void }) {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const isIncome = tx.type === "income";
@@ -156,7 +158,7 @@ function TransactionRow({ tx, onPress }: { tx: Transaction; onPress: () => void 
         </Text>
       </View>
       <Text style={[styles.amount, isIncome && styles.amountIncome]}>
-        {formatSignedAmount(tx.amountCents, tx.type)}
+        {money.signed(tx.amountCents, tx.type)}
       </Text>
     </Pressable>
   );

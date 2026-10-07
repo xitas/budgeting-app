@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { formatMoney } from "shared";
 import { BudgetVsActualChart } from "../components/charts/BudgetVsActualChart";
 import { IncomeVsExpenseChart } from "../components/charts/IncomeVsExpenseChart";
 import { SpendingByCategoryChart } from "../components/charts/SpendingByCategoryChart";
 import { StatTile } from "../components/charts/StatTile";
 import { useAuth } from "../context/AuthContext";
 import { useBudgetVsActual, useDashboardSummary, useIncomeVsExpense, useSpendingByCategory } from "../features/dashboard/hooks";
+import { useMoney } from "../lib/useMoney";
 
 const MONTH_NAMES = [
   "January",
@@ -23,6 +23,7 @@ const MONTH_NAMES = [
 ];
 
 export function DashboardPage() {
+  const money = useMoney();
   const { user } = useAuth();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -75,16 +76,16 @@ export function DashboardPage() {
       )}
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatTile label="Income" value={formatMoney(summary?.incomeCents ?? 0)} tone="positive" />
-        <StatTile label="Expense" value={formatMoney(summary?.expenseCents ?? 0)} tone="negative" />
+        <StatTile label="Income" value={money.format(summary?.incomeCents ?? 0)} tone="positive" />
+        <StatTile label="Expense" value={money.format(summary?.expenseCents ?? 0)} tone="negative" />
         <StatTile
           label="Net lending"
-          value={formatMoney(summary?.netLendingCents ?? 0)}
+          value={money.format(summary?.netLendingCents ?? 0)}
           tone={summary && summary.netLendingCents < 0 ? "negative" : "neutral"}
         />
         <StatTile
           label="Net"
-          value={formatMoney(summary?.netCents ?? 0)}
+          value={money.format(summary?.netCents ?? 0)}
           tone={summary && summary.netCents < 0 ? "negative" : "neutral"}
         />
       </div>

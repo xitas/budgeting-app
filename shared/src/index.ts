@@ -56,6 +56,7 @@ export function schemeColor(hex: string, scheme: ColorScheme): string {
 
 // Money: integer cents everywhere, plus the shared parse/format helpers.
 export * from "./money";
+export * from "./currency";
 
 // CSV import parsing (web + mobile).
 export * from "./csvImport";

@@ -1,6 +1,4 @@
 
-import { formatMoney } from "shared";
-
 // Rounds a max value up to a clean axis top (1 / 2 / 2.5 / 5 × 10^k) so
 // gridline labels read as 0 / 500 / 1,000 rather than 0 / 437 / 874.
 export function niceCeiling(value: number): number {
@@ -21,8 +19,3 @@ function trim(n: number): string {
   return n.toFixed(1).replace(/\.0$/, "");
 }
 
-// Money labels: values are integer cents, formatted by the shared helper so
-// charts read exactly like the rest of the app.
-export function formatAmount(cents: number): string {
-  return formatMoney(cents);
-}

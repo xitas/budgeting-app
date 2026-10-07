@@ -1,4 +1,5 @@
-import { centsFromDecimal, formatMoney } from "shared";
+import { centsFromDecimal } from "shared";
+import { useMoney } from "../../lib/useMoney";
 
 interface TooltipPayloadItem {
   value: number;
@@ -17,6 +18,7 @@ interface ChartTooltipProps {
 // already knows the series and wants the figure. Charts plot money in
 // currency units (see centsToUnits); the figure is formatted back from cents.
 export function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
+  const money = useMoney();
   if (!active || !payload || payload.length === 0) {
     return null;
   }
@@ -28,7 +30,7 @@ export function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
         <div key={item.name} className="flex items-center gap-1.5">
           <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
           <span className="text-slate-500">{item.name}:</span>
-          <span className="font-semibold text-slate-900">{formatMoney(centsFromDecimal(item.value))}</span>
+          <span className="font-semibold text-slate-900">{money.format(centsFromDecimal(item.value))}</span>
         </div>
       ))}
     </div>

@@ -1,11 +1,13 @@
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { centsToUnits, formatMoney, type CategorySpending } from "shared";
+import { centsToUnits, type CategorySpending } from "shared";
 import { ChartCard } from "./ChartCard";
 import { ChartTooltip } from "./ChartTooltip";
 import { useChartTheme } from "./chartTheme";
+import { useMoney } from "../../lib/useMoney";
 
 
 export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) {
+  const money = useMoney();
   const theme = useChartTheme();
   if (data.length === 0) {
     return (
@@ -32,7 +34,7 @@ export function SpendingByCategoryChart({ data }: { data: CategorySpending[] }) 
                 {row.name}
               </span>
             </td>
-            <td className="py-1.5 text-right">{formatMoney(row.amountCents)}</td>
+            <td className="py-1.5 text-right">{money.format(row.amountCents)}</td>
           </tr>
         ))}
       </tbody>

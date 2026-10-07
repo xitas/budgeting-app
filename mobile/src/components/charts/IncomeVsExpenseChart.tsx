@@ -4,8 +4,9 @@ import { CATEGORICAL_PALETTE, centsToUnits, type MonthlyTrendPoint } from "share
 import { MONTH_NAMES, shortMonthLabel } from "../../lib/dates";
 import { type Colors } from "../ui/theme";
 import { ChartCard, DataTable } from "./ChartCard";
-import { formatAmount, formatCompact, niceCeiling } from "./chartUtils";
+import { formatCompact, niceCeiling } from "./chartUtils";
 import { useSchemeColor, useThemedStyles } from "../../context/ThemeContext";
+import { useMoney } from "../../lib/useMoney";
 
 // Same slots as the web chart: palette order, never reassigned.
 const INCOME_COLOR = CATEGORICAL_PALETTE[0];
@@ -19,6 +20,7 @@ const AXIS_WIDTH = 36;
 // month selects it and the readout above the plot plays the tooltip's role;
 // the latest month starts selected (label the endpoint).
 export function IncomeVsExpenseChart({ data }: { data: MonthlyTrendPoint[] }) {
+  const money = useMoney();
   const styles = useThemedStyles(makeStyles);
   const schemeColor = useSchemeColor();
   const incomeColor = schemeColor(INCOME_COLOR);
@@ -35,7 +37,7 @@ export function IncomeVsExpenseChart({ data }: { data: MonthlyTrendPoint[] }) {
       tableView={
         <DataTable
           headers={["Month", "Income", "Expense"]}
-          rows={data.map((p) => [monthName(p.month), formatAmount(p.incomeCents), formatAmount(p.expenseCents)])}
+          rows={data.map((p) => [monthName(p.month), money.format(p.incomeCents), money.format(p.expenseCents)])}
         />
       }
     >
@@ -47,7 +49,7 @@ export function IncomeVsExpenseChart({ data }: { data: MonthlyTrendPoint[] }) {
       {selected ? (
         <Text style={styles.readout}>
           <Text style={styles.readoutMonth}>{monthName(selected.month)}</Text>
-          {"  "}Income {formatAmount(selected.incomeCents)} · Expense {formatAmount(selected.expenseCents)}
+          {"  "}Income {money.format(selected.incomeCents)} · Expense {money.format(selected.expenseCents)}
         </Text>
       ) : null}
 
@@ -71,7 +73,7 @@ export function IncomeVsExpenseChart({ data }: { data: MonthlyTrendPoint[] }) {
                 <Pressable
                   key={p.month}
                   accessibilityRole="button"
-                  accessibilityLabel={`${monthName(p.month)}: income ${formatAmount(p.incomeCents)}, expense ${formatAmount(p.expenseCents)}`}
+                  accessibilityLabel={`${monthName(p.month)}: income ${money.format(p.incomeCents)}, expense ${money.format(p.expenseCents)}`}
                   accessibilityState={{ selected: isSelected }}
                   onPress={() => setSelectedIndex(i)}
                   // The whole month band is the hit target, not just the thin columns.

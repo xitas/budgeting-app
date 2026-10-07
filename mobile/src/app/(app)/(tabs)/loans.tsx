@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
-import { formatMoney, type Loan } from "shared";
+import { type Loan } from "shared";
 import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../../components/ui/layout";
 import { Meter } from "../../../components/ui/Meter";
 import { radius, type Colors } from "../../../components/ui/theme";
@@ -9,6 +9,7 @@ import { describeLoanState, loanColor } from "../../../features/loans/loanDispla
 import { formatDisplayDate } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
 import { useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
+import { useMoney } from "../../../lib/useMoney";
 
 export default function LoansScreen() {
   const styles = useThemedStyles(makeStyles);
@@ -40,6 +41,7 @@ export default function LoansScreen() {
 }
 
 function LoanCard({ loan, onPress }: { loan: Loan; onPress: () => void }) {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const closed = loan.status !== "open";
@@ -58,10 +60,10 @@ function LoanCard({ loan, onPress }: { loan: Loan; onPress: () => void }) {
       <Meter value={loan.repaidCents} max={loan.principalCents} color={schemeColor(loanColor(loan))} />
       <View style={styles.footer}>
         <Text style={styles.meta}>
-          {describeLoanState(loan)} · {formatDisplayDate(loan.date)}
+          {describeLoanState(loan, money)} · {formatDisplayDate(loan.date)}
         </Text>
         <Text style={styles.amounts}>
-          {formatMoney(loan.repaidCents)} / {formatMoney(loan.principalCents)}
+          {money.format(loan.repaidCents)} / {money.format(loan.principalCents)}
         </Text>
       </View>
     </Pressable>

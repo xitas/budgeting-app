@@ -12,8 +12,9 @@ import { extractErrorMessage } from "../../lib/errors";
 import { zodFormResolver } from "../../lib/zodFormResolver";
 import { amountField, parseAmountDraft } from "../../lib/money";
 import { useAddRepayment, useCreateLoan, useDeleteLoan, useLoans, useRemoveRepayment, useUpdateLoan } from "./hooks";
-import { CATEGORICAL_PALETTE, centsToDecimalString, formatMoney, parseAmountInput, type Loan, type UpdateLoanInput } from "shared";
+import { CATEGORICAL_PALETTE, centsToDecimalString, parseAmountInput, type Loan, type UpdateLoanInput } from "shared";
 import { useSchemeColor } from "../../context/ThemeContext";
+import { useMoney, type Money } from "../../lib/useMoney";
 
 const createLoanSchema = z.object({
   counterparty: z.string().min(1, "Counterparty is required"),
@@ -37,17 +38,17 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function describeLoanState(loan: Loan): string {
+function describeLoanState(loan: Loan, money: Money): string {
   if (loan.status === "written_off") {
     return loan.direction === "lent" ? "Written off" : "Forgiven";
   }
   if (loan.outstandingCents < 0) {
-    return `Overpaid by ${formatMoney(loan.outstandingCents, { sign: "never" })}`;
+    return `Overpaid by ${money.format(loan.outstandingCents, { sign: "never" })}`;
   }
   if (loan.outstandingCents === 0) {
     return "Settled";
   }
-  return `${formatMoney(loan.outstandingCents)} remaining`;
+  return `${money.format(loan.outstandingCents)} remaining`;
 }
 
 function AddLoanForm({ onSuccess }: { onSuccess: () => void }) {
@@ -146,6 +147,7 @@ function AddRepaymentForm({ loanId, onSuccess }: { loanId: string; onSuccess: ()
 }
 
 export function LoansPanel() {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const { data: loans, isLoading, isError } = useLoans();
   const updateLoan = useUpdateLoan();
@@ -279,7 +281,7 @@ export function LoansPanel() {
                       )}
                     </span>
                     <span className={loan.outstandingCents < 0 ? "text-red-600" : "text-slate-900"}>
-                      {formatMoney(loan.repaidCents)} /{" "}
+                      {money.format(loan.repaidCents)} /{" "}
                       {isEditing ? (
                         <input
                           type="text"
@@ -290,7 +292,7 @@ export function LoansPanel() {
                           onChange={(e) => setDraftPrincipal(e.target.value)}
                         />
                       ) : (
-                        formatMoney(loan.principalCents)
+                        money.format(loan.principalCents)
                       )}
                     </span>
                   </div>
@@ -322,7 +324,7 @@ export function LoansPanel() {
                   ) : (
                     <div className="mt-1 flex items-center justify-between text-xs">
                       <span className="text-slate-400">
-                        {describeLoanState(loan)} · {formatDisplayDate(loan.date)}
+                        {describeLoanState(loan, money)} · {formatDisplayDate(loan.date)}
                       </span>
                       <span className="inline-flex items-center gap-1">
                         <button
@@ -375,7 +377,7 @@ export function LoansPanel() {
                           <li key={r.id}>
                             <div className="flex items-center justify-between text-xs text-slate-500">
                               <span>
-                                {formatDisplayDate(r.date)} — {formatMoney(r.amountCents)}
+                                {formatDisplayDate(r.date)} — {money.format(r.amountCents)}
                                 {r.note && ` (${r.note})`}
                               </span>
                               <button

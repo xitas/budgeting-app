@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useState } from "react";
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
-import { formatSignedAmount, type RecurringTransaction } from "shared";
+import { type RecurringTransaction } from "shared";
 import { CenteredMessage, Fab, FAB_CLEARANCE } from "../../components/ui/layout";
 import { radius, type Colors } from "../../components/ui/theme";
 import { describeFrequency } from "../../features/recurring/describe";
@@ -9,6 +9,7 @@ import { useRecurring, useRunRecurringNow } from "../../features/recurring/hooks
 import { formatDisplayDate } from "../../lib/dates";
 import { extractErrorMessage } from "../../lib/errors";
 import { useSchemeColor, useThemedStyles } from "../../context/ThemeContext";
+import { useMoney } from "../../lib/useMoney";
 
 export default function RecurringScreen() {
   const styles = useThemedStyles(makeStyles);
@@ -64,6 +65,7 @@ interface RecurringCardProps {
 }
 
 function RecurringCard({ rule, runMessage, onPress, onRunNow }: RecurringCardProps) {
+  const money = useMoney();
   const schemeColor = useSchemeColor();
   const styles = useThemedStyles(makeStyles);
   const isIncome = rule.type === "income";
@@ -86,7 +88,7 @@ function RecurringCard({ rule, runMessage, onPress, onRunNow }: RecurringCardPro
             {!rule.isActive ? <Text style={styles.paused}> (paused)</Text> : null}
           </Text>
           <Text style={[styles.amount, isIncome && styles.amountIncome]}>
-            {formatSignedAmount(rule.amountCents, rule.type)}
+            {money.signed(rule.amountCents, rule.type)}
           </Text>
         </View>
         <Text style={styles.meta}>
