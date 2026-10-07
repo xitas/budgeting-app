@@ -19,6 +19,7 @@ export default function AppLayout() {
       <Stack.Screen name="categories" options={{ title: "Categories" }} />
       <Stack.Screen name="recurring" options={{ title: "Recurring" }} />
       <Stack.Screen name="settings" options={{ title: "Settings" }} />
+      <Stack.Screen name="import" options={{ title: "Import CSV" }} />
 
       <Stack.Screen name="account/verify-email" options={{ presentation: "modal", title: "Verify your email" }} />
       <Stack.Screen name="account/email" options={{ presentation: "modal", title: "Change email" }} />

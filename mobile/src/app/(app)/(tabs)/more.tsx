@@ -21,6 +21,7 @@ const LINKS: { href: Href; label: string; description: string; icon: IconName }[
   { href: "/budgets", label: "Budgets", description: "Monthly limits per expense category", icon: "wallet-outline" },
   { href: "/categories", label: "Categories", description: "Names and colors for your income and expenses", icon: "pricetags-outline" },
   { href: "/recurring", label: "Recurring", description: "Rules that add transactions automatically", icon: "repeat-outline" },
+  { href: "/import", label: "Import CSV", description: "Add transactions from a bank or app export", icon: "cloud-upload-outline" },
   { href: "/settings", label: "Settings", description: "Profile, currency, email, password, backup", icon: "settings-outline" },
 ];
 

@@ -53,3 +53,43 @@ export function shortMonthLabel(yearMonth: string): string {
   // "2026-01" -> "Jan"
   return MONTH_ABBR[Number(yearMonth.slice(5, 7)) - 1] ?? yearMonth;
 }
+
+export type DatePreset = "all" | "thisMonth" | "lastMonth" | "last3Months" | "custom";
+
+export const DATE_PRESETS: { value: DatePreset; label: string }[] = [
+  { value: "all", label: "All time" },
+  { value: "thisMonth", label: "This month" },
+  { value: "lastMonth", label: "Last month" },
+  { value: "last3Months", label: "Last 3 months" },
+  { value: "custom", label: "Custom" },
+];
+
+function isoDay(year: number, month: number, day: number): string {
+  return `${year}-${pad(month)}-${pad(day)}`;
+}
+
+function lastDayOf(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate(); // day 0 of next month
+}
+
+// Inclusive YYYY-MM-DD range for a preset, relative to `today` (local).
+// "Last 3 months" is this month plus the two before it. "all" and "custom"
+// return no bounds (custom dates come from the pickers).
+export function datePresetRange(preset: DatePreset, today: Date = new Date()): { from?: string; to?: string } {
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  switch (preset) {
+    case "thisMonth":
+      return { from: isoDay(year, month, 1), to: isoDay(year, month, lastDayOf(year, month)) };
+    case "lastMonth": {
+      const prev = shiftMonth(month, year, -1);
+      return { from: isoDay(prev.year, prev.month, 1), to: isoDay(prev.year, prev.month, lastDayOf(prev.year, prev.month)) };
+    }
+    case "last3Months": {
+      const start = shiftMonth(month, year, -2);
+      return { from: isoDay(start.year, start.month, 1), to: isoDay(year, month, lastDayOf(year, month)) };
+    }
+    default:
+      return {};
+  }
+}

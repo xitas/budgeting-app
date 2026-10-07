@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { niceCeiling } from "../components/charts/chartUtils";
-import { formatDisplayDate, isoToLocalDate, localDateToIso, shiftMonth, shortMonthLabel } from "./dates";
+import { datePresetRange, formatDisplayDate, isoToLocalDate, localDateToIso, shiftMonth, shortMonthLabel } from "./dates";
 
 describe("shiftMonth", () => {
   it("rolls over year boundaries in both directions", () => {
@@ -34,5 +34,26 @@ describe("niceCeiling", () => {
     expect(niceCeiling(2400)).toBe(2500);
     expect(niceCeiling(50)).toBe(50);
     expect(niceCeiling(0)).toBe(1);
+  });
+});
+
+describe("datePresetRange", () => {
+  const today = new Date(2026, 9, 7); // 7 Oct 2026, local
+
+  it("covers whole calendar months, inclusive", () => {
+    expect(datePresetRange("thisMonth", today)).toEqual({ from: "2026-10-01", to: "2026-10-31" });
+    expect(datePresetRange("lastMonth", today)).toEqual({ from: "2026-09-01", to: "2026-09-30" });
+    expect(datePresetRange("last3Months", today)).toEqual({ from: "2026-08-01", to: "2026-10-31" });
+  });
+
+  it("handles year boundaries and February", () => {
+    expect(datePresetRange("lastMonth", new Date(2026, 0, 15))).toEqual({ from: "2025-12-01", to: "2025-12-31" });
+    expect(datePresetRange("last3Months", new Date(2026, 1, 3))).toEqual({ from: "2025-12-01", to: "2026-02-28" });
+    expect(datePresetRange("thisMonth", new Date(2028, 1, 10))).toEqual({ from: "2028-02-01", to: "2028-02-29" }); // leap year
+  });
+
+  it("has no bounds for all time and custom", () => {
+    expect(datePresetRange("all", today)).toEqual({});
+    expect(datePresetRange("custom", today)).toEqual({});
   });
 });

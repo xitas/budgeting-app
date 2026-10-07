@@ -9,7 +9,8 @@ import { type Colors } from "../../../components/ui/theme";
 import { useCategories } from "../../../features/categories/hooks";
 import { exportTransactionsCsv } from "../../../features/transactions/api";
 import { useInfiniteTransactions } from "../../../features/transactions/hooks";
-import { formatDisplayDate, todayIso } from "../../../lib/dates";
+import { DateField } from "../../../components/ui/DateField";
+import { DATE_PRESETS, datePresetRange, formatDisplayDate, todayIso, type DatePreset } from "../../../lib/dates";
 import { extractErrorMessage } from "../../../lib/errors";
 import { shareCsv } from "../../../lib/shareFile";
 import { useColors, useSchemeColor, useThemedStyles } from "../../../context/ThemeContext";
@@ -29,11 +30,18 @@ export default function TransactionsScreen() {
   const colors = useColors();
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
+  const [customFrom, setCustomFrom] = useState<string | undefined>(undefined);
+  const [customTo, setCustomTo] = useState<string | undefined>(undefined);
   const { data: categories } = useCategories();
 
+  // Same inclusive from/to the web filters send.
+  const range = datePreset === "custom" ? { from: customFrom, to: customTo } : datePresetRange(datePreset);
   const filters = {
     type: typeFilter === "all" ? undefined : typeFilter,
     category: categoryFilter || undefined,
+    from: range.from,
+    to: range.to,
   };
   const query = useInfiniteTransactions(filters);
   const navigation = useNavigation();
@@ -58,15 +66,14 @@ export default function TransactionsScreen() {
         isExporting ? (
           <ActivityIndicator style={styles.headerButton} color={colors.link} />
         ) : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Export as CSV"
-            hitSlop={12}
-            onPress={() => void handleExport()}
-            style={styles.headerButton}
-          >
-            <Ionicons name="share-outline" size={22} color={colors.link} />
-          </Pressable>
+          <View style={styles.headerButtons}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Import CSV" hitSlop={12} onPress={() => router.push("/import")}>
+              <Ionicons name="cloud-upload-outline" size={22} color={colors.link} />
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Export as CSV" hitSlop={12} onPress={() => void handleExport()}>
+              <Ionicons name="share-outline" size={22} color={colors.link} />
+            </Pressable>
+          </View>
         ),
     });
   });
@@ -112,6 +119,21 @@ export default function TransactionsScreen() {
                 />
               ))}
             </ScrollView>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+              {DATE_PRESETS.map((p) => (
+                <FilterChip key={p.value} label={p.label} selected={datePreset === p.value} onPress={() => setDatePreset(p.value)} />
+              ))}
+            </ScrollView>
+            {datePreset === "custom" ? (
+              <View style={styles.customRange}>
+                <View style={styles.flex}>
+                  <DateField label="From" value={customFrom} onChange={setCustomFrom} placeholder="Any" onClear={() => setCustomFrom(undefined)} />
+                </View>
+                <View style={styles.flex}>
+                  <DateField label="To" value={customTo} onChange={setCustomTo} placeholder="Any" onClear={() => setCustomTo(undefined)} />
+                </View>
+              </View>
+            ) : null}
           </View>
         }
         ListEmptyComponent={
@@ -211,4 +233,6 @@ const makeStyles = (colors: Colors) =>
     separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
     footer: { padding: 16 },
     headerButton: { marginRight: 16 },
+    headerButtons: { flexDirection: "row", gap: 20, marginRight: 16 },
+    customRange: { flexDirection: "row", gap: 12 },
   });

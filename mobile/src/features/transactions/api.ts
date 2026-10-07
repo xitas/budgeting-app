@@ -1,6 +1,8 @@
 import { apiClient } from "../../lib/apiClient";
 import type {
   CreateTransactionInput,
+  ImportCheckRow,
+  ImportTransactionRow,
   PaginatedTransactions,
   Transaction,
   TransactionFilters,
@@ -35,4 +37,16 @@ export async function updateTransaction(id: string, updates: UpdateTransactionIn
 
 export async function deleteTransaction(id: string): Promise<void> {
   await apiClient.delete(`/transactions/${id}`);
+}
+
+// CSV import (same endpoints as the web app): indexes of rows that match an
+// existing transaction, then the all-or-nothing import itself.
+export async function checkImportDuplicates(rows: ImportCheckRow[]): Promise<number[]> {
+  const res = await apiClient.post<{ duplicates: number[] }>("/transactions/import/check", { rows });
+  return res.data.duplicates;
+}
+
+export async function importTransactions(rows: ImportTransactionRow[]): Promise<number> {
+  const res = await apiClient.post<{ imported: number }>("/transactions/import", { rows });
+  return res.data.imported;
 }
